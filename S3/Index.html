@@ -3,260 +3,143 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ProtectTheHoney — Decoy Admin</title>
+<title>Welcome to ProtectTheHoney</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0f1724; --card:#0b1220; --accent:#ffb86b; --muted:#94a3b8; --glass: rgba(255,255,255,0.04);
-    --success:#10b981; --danger:#ef4444;
+  :root {
+    --bg: #fdf6e3;
+    --card: #f5deb3;
+    --accent: #ffb86b;
+    --muted: #6b705c;
+    --glass: rgba(255, 255, 255, 0.2);
     font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   }
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    background: linear-gradient(180deg,#071024 0%, #081428 60%);
-    color:#e6eef8;
-    -webkit-font-smoothing:antialiased;
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:28px;
+  * {
+    box-sizing: border-box;
   }
-  .container{
-    width:100%;
-    max-width:1100px;
-    display:grid;
-    grid-template-columns: 1fr 420px;
-    gap:28px;
-  }
-  .panel{
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:12px;
-    padding:22px;
-    box-shadow: 0 6px 30px rgba(2,6,23,0.7);
-    border: 1px solid rgba(255,255,255,0.03);
-  }
-  header h1{ margin:0; font-size:20px; letter-spacing:0.2px; }
-  header p{ margin:8px 0 0; color:var(--muted); font-size:13px }
-
-  .hero{
-    display:flex;
-    gap:20px;
-    align-items:flex-start;
-  }
-  .hero .left{ flex:1 }
-  .logo{
-    width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#ff8a65);
-    display:flex;align-items:center;justify-content:center;font-weight:700;color:#071024;font-size:20px;
-    box-shadow: 0 6px 18px rgba(255,184,107,0.08);
+  body {
+    margin: 0;
+    background: linear-gradient(180deg, #fefae0 0%, #f5deb3 60%);
+    color: #3d405b;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
-  .card{
-    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-    padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.02); margin-top:14px;
+  /* === NAVIGATION BAR === */
+  nav {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 14px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+  }
+  nav a {
+    text-decoration: none;
+    color: #3d405b;
+    font-weight: 600;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+  }
+  nav a:hover {
+    color: #ff8a65;
   }
 
-  form{ display:flex; flex-direction:column; gap:12px; margin-top:12px }
-  label{ font-size:13px; color:var(--muted) }
-  input[type="text"], input[type="password"], textarea{
-    padding:10px 12px;
-    border-radius:8px;
-    background:var(--glass);
-    border:1px solid rgba(255,255,255,0.03);
-    color:inherit;
-    outline:none;
-    font-size:14px;
-    resize:vertical;
+  .container {
+    text-align: center;
+    max-width: 800px;
+    margin: 120px auto 40px; /* adjusted for fixed nav */
+    padding: 0 20px;
   }
-  button{
-    background: linear-gradient(90deg,var(--accent), #ff8a65);
+  .logo {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #ff8a65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #3d405b;
+    font-size: 36px;
+    margin: 0 auto 20px;
+    box-shadow: 0 6px 18px rgba(255, 184, 107, 0.2);
+  }
+  h1 {
+    font-size: 32px;
+    margin: 0 0 12px;
+  }
+  p {
+    font-size: 16px;
+    color: var(--muted);
+    margin: 0 0 24px;
+  }
+  .buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 20px;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  .btn {
+    background: linear-gradient(90deg, var(--accent), #ff8a65);
     border: none;
-    padding:10px 12px;
-    border-radius:8px;
-    color:#071024;
-    font-weight:600;
-    cursor:pointer;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: #3d405b;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-size: 14px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .muted{ color:var(--muted); font-size:13px }
-
-  .log{
-    height:240px; overflow:auto; background: rgba(2,6,23,0.6); border-radius:8px; padding:12px; font-family:monospace;
-    font-size:13px; border:1px solid rgba(255,255,255,0.02)
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(255, 184, 107, 0.3);
   }
-
-  .right-column{
-    display:flex; flex-direction:column; gap:14px;
-  }
-
-  .small{
-    font-size:12px;color:var(--muted);
-  }
-
-  .btn-ghost{
-    background:transparent;border:1px solid rgba(255,255,255,0.04); color:var(--muted); padding:8px 10px;border-radius:8px;
-    cursor:pointer;
-  }
-
-  footer{ margin-top:10px; font-size:12px; color:var(--muted) }
-
-  @media (max-width:980px){
-    .container{ grid-template-columns: 1fr; }
+  footer {
+    margin-top: 40px;
+    font-size: 12px;
+    color: var(--muted);
   }
 </style>
 </head>
 <body>
+
+  <!-- Navigation bar -->
+  <nav>
+    <a href="./index.html">Home</a>
+    <a href="./products.html">Products</a>
+    <a href="./login.html">Login</a>
+    <a href="./admin.html">Admin</a>
+  </nav>
+
   <div class="container">
-    <div class="panel">
-      <header class="hero">
-        <div class="logo">PH</div>
-        <div class="left">
-          <h1>ProtectTheHoney — Decoy Admin Portal</h1>
-          <p class="muted">This is a decoy admin page for testing honeypot logging. Interactions are sent to a test honeypot endpoint for analysis.</p>
-        </div>
-      </header>
-
-      <div class="card">
-        <h3 style="margin:0 0 8px 0">Admin Login</h3>
-        <p class="small">This form submits to the honeypot API. Use test inputs only.</p>
-
-        <form id="loginForm">
-          <label>Username</label>
-          <input type="text" id="username" placeholder="admin" autocomplete="off" />
-          <label>Password</label>
-          <input type="password" id="password" placeholder="password123" autocomplete="off" />
-          <div style="display:flex;gap:8px">
-            <button type="submit">Sign In</button>
-            <button type="button" class="btn-ghost" id="fakeBtn">Try safe demo</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card" style="margin-top:14px">
-        <h3 style="margin:0 0 8px 0">Contact Admin</h3>
-        <p class="small">Submitting a message also triggers a honeypot event.</p>
-        <form id="contactForm">
-          <label>From</label>
-          <input type="text" id="from" placeholder="user@example.com" />
-          <label>Message</label>
-          <textarea id="message" rows="4" placeholder="Hello, admin..."></textarea>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button type="submit">Send</button>
-            <button type="button" class="btn-ghost" id="clearLog">Clear log</button>
-          </div>
-        </form>
-      </div>
-
-      <footer class="small">
-        <strong>Note:</strong> Do not collect or submit real credentials or private data. Use this for local/sandbox testing only.
-      </footer>
+    <div class="logo">🐝</div>
+    <h1>Welcome to ProtectTheHoney</h1>
+    <p>Discover the finest organic honey, harvested sustainably from our buzzing bee colonies. Support the bees and enjoy nature's sweetest gift!</p>
+    <div class="buttons">
+      <a href="./login.html"><button class="btn">Login</button></a>
+      <a href="./products.html"><button class="btn">Shop Honey</button></a>
     </div>
-
-    <aside class="panel right-column">
-      <div>
-        <h3 style="margin:0 0 8px 0">Activity Log</h3>
-        <div class="log" id="log">Ready — interactions will appear here.</div>
-      </div>
-
-      <div class="card">
-        <h4 style="margin:0 0 8px 0">Endpoint</h4>
-        <p class="muted" id="endpointText">https://rlvfmp3gt2.execute-api.us-east-1.amazonaws.com/default/HoneyPot1</p>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button id="visitEndpoint" class="btn-ghost">Open Endpoint</button>
-          <button id="pingEndpoint" class="btn-ghost">Ping (GET)</button>
-        </div>
-      </div>
-
-      <div class="card small">
-        <strong>How it works</strong>
-        <p class="muted">Forms send JSON POST requests to the honeypot API. Responses and any errors are shown in the activity log.</p>
-      </div>
-    </aside>
+    <footer>
+      <strong>Note:</strong> Every purchase helps protect bees and their habitats. Thank you for supporting sustainable beekeeping!
+    </footer>
   </div>
 
-<script>
-  const ENDPOINT = 'https://rlvfmp3gt2.execute-api.us-east-1.amazonaws.com/default/HoneyPot1';
-  const logEl = document.getElementById('log');
-
-  function log(...args){
-    const t = new Date().toISOString();
-    const text = `[${t}] ` + args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
-    logEl.textContent = text + "\\n" + logEl.textContent;
-  }
-
-  async function sendPayload(payload){
-    log('Sending payload:', payload);
-    try {
-      const res = await fetch(ENDPOINT, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(payload),
-        mode: 'cors'
-      });
-      const txt = await res.text();
-      log('Response status:', res.status, 'body:', txt);
-      return {status: res.status, body: txt};
-    } catch (e) {
-      log('Network/Error:', e.message || e);
-      return {status: 0, body: String(e)};
-    }
-  }
-
-  // Login form
-  document.getElementById('loginForm').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const username = document.getElementById('username').value || 'unknown';
-    const password = document.getElementById('password').value || 'unknown';
-    const payload = {
-      event_type: 'login_attempt',
-      username,
-      password,
-      timestamp: new Date().toISOString(),
-      path: '/admin/login'
-    };
-    await sendPayload(payload);
-  });
-
-  // Contact form
-  document.getElementById('contactForm').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const from = document.getElementById('from').value || 'anonymous';
-    const message = document.getElementById('message').value || '';
-    const payload = {
-      event_type: 'contact_message',
-      from,
-      message,
-      timestamp: new Date().toISOString(),
-      path: '/contact'
-    };
-    await sendPayload(payload);
-  });
-
-  document.getElementById('fakeBtn').addEventListener('click', () => {
-    document.getElementById('username').value = 'test_admin';
-    document.getElementById('password').value = 'hunter2';
-    log('Filled demo credentials (no submit).');
-  });
-
-  document.getElementById('clearLog').addEventListener('click', () => logEl.textContent = 'Ready — interactions will appear here.');
-
-  document.getElementById('visitEndpoint').addEventListener('click', () => {
-    window.open(ENDPOINT, '_blank');
-  });
-
-  document.getElementById('pingEndpoint').addEventListener('click', async () => {
-    log('Pinging endpoint with GET...');
-    try {
-      const r = await fetch(ENDPOINT, {method: 'GET', mode:'cors'});
-      const txt = await r.text();
-      log('Ping status:', r.status, 'body:', txt);
-    } catch (e) {
-      log('Ping error:', e.message || e);
-    }
-  });
-
-  // Quick hint: add a small random probe to simulate noisy traffic (disabled by default)
-  // setInterval(() => sendPayload({event_type:'probe',probe_id:Math.random().toString(36).slice(2),timestamp:new Date().toISOString()}), 0);
-</script>
 </body>
 </html>

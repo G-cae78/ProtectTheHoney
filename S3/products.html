@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Products - ProtectTheHoney</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    background: linear-gradient(180deg, #071024 0%, #081428 60%);
+    color: #e6eef8;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  h1 {
+    margin-bottom: 20px;
+    font-size: 2.2rem;
+    font-weight: 700;
+  }
+  p.intro {
+    color: #b9c6dc;
+    margin-bottom: 40px;
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 900px;
+  }
+  .product-card {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  }
+  .product-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+  .product-card h2 {
+    font-size: 1.1rem;
+    margin: 10px 0 6px;
+  }
+  .product-card p {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: 0.95rem;
+  }
+  .price {
+    margin-top: 6px;
+    color: #ffd166;
+    font-weight: 600;
+  }
+  nav {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 14px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+  }
+  nav a {
+    text-decoration: none;
+    color: #3d405b;
+    font-weight: 600;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+  }
+  nav a:hover {
+    color: #ff8a65;
+  }
+</style>
+</head>
+<body>
+    <nav>
+    <a href="./index.html">Home</a>
+    <a href="./products.html">Products</a>
+    <a href="./login.html">Login</a>
+    <a href="./admin.html">Admin</a>
+  </nav>
+  <h1>Our Honey Products</h1>
+  <p class="intro">Pure, natural, and sweet — explore our collection of artisanal honey products.</p>
+  
+  <div class="product-grid">
+    <div class="product-card">
+      <img src="https://images.unsplash.com/photo-1560840045-8f33a1a225c2?auto=format&fit=crop&w=400&q=80" alt="Wildflower Honey">
+      <h2>Wildflower Honey</h2>
+      <p>Raw, unfiltered honey sourced from mountain wildflowers.</p>
+      <div class="price">$9.99</div>
+    </div>
+    <div class="product-card">
+      <img src="https://images.unsplash.com/photo-1603190287605-e6ade32fa852?auto=format&fit=crop&w=400&q=80" alt="Clover Honey">
+      <h2>Clover Honey</h2>
+      <p>Classic golden honey with a mild, sweet flavour perfect for tea.</p>
+      <div class="price">$7.49</div>
+    </div>
+    <div class="product-card">
+      <img src="https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?auto=format&fit=crop&w=400&q=80" alt="Manuka Honey">
+      <h2>Manuka Honey</h2>
+      <p>Premium antibacterial honey from New Zealand’s native Manuka plant.</p>
+      <div class="price">$19.99</div>
+    </div>
+    <div class="product-card">
+      <img src="https://images.unsplash.com/photo-1587049352850-8ad2a73e7a3f?auto=format&fit=crop&w=400&q=80" alt="Honeycomb Jar">
+      <h2>Honeycomb Jar</h2>
+      <p>Pure honeycomb preserved in golden honey — sweet and crunchy.</p>
+      <div class="price">$14.50</div>
+    </div>
+  </div>
+</body>
+</html>
