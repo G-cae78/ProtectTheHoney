@@ -23,6 +23,7 @@ def safe_decode_body(event):
             body = base64.b64decode(body).decode("utf-8", errors="ignore")
         except Exception as e:
             print("⚠️ base64 decode failed:", e)
+            # leave body as-is
 
     return body
 
@@ -68,6 +69,7 @@ def extract_fields_from_event(event):
 
     # 2. body parsing
     raw_body = safe_decode_body(event)
+    print("Debuuggerrrr")
     if raw_body:
         # try JSON first
         parsed_json = try_parse_json(raw_body)
