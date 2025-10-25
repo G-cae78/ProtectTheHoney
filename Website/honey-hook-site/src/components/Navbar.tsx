@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { User, ShieldCheck } from "lucide-react";
 
 const Navbar = () => {
   return (
@@ -8,21 +7,18 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="text-2xl font-bold bg-gradient-honey bg-clip-text text-transparent">
-            Pure Honey
+            MovieStream
           </Link>
           
           <div className="flex items-center gap-3">
+            <Link to="/">
+              <Button variant="ghost" size="sm">Home</Button>
+            </Link>
             <Link to="/login">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <User className="w-4 h-4" />
-                Login
-              </Button>
+              <Button variant="ghost" size="sm">Login</Button>
             </Link>
             <Link to="/admin">
-              <Button variant="outline" size="sm" className="gap-2">
-                <ShieldCheck className="w-4 h-4" />
-                Admin
-              </Button>
+              <Button variant="outline" size="sm">Admin</Button>
             </Link>
           </div>
         </div>

@@ -40,3 +40,12 @@
 .read-the-docs {
   color: #888;
 }
+
+.blur-link {
+  filter: blur(4px); /* Adjust the blur intensity */
+  pointer-events: none; /* Prevent human users from clicking */
+}
+
+.blur-link a {
+  pointer-events: auto; /* Allow bots to click the link */
+}

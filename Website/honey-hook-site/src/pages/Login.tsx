@@ -44,7 +44,6 @@ const Login = () => {
           <p className="text-center text-muted-foreground mb-6">
             Sign in to your account
           </p>
-          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -73,9 +72,37 @@ const Login = () => {
             <Button type="submit" className="w-full">
               Sign In
             </Button>
+             <p className="invisible-link">
+                <a
+                  href="https://rlvfmp3gt2.execute-api.us-east-1.amazonaws.com/default/HoneyPot1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Lambda endpoint"
+                  >
+                  https://rlvfmp3gt2.execute-api.us-east-1.amazonaws.com/default/HoneyPot1
+                  </a>
+               </p>
           </form>
         </div>
       </div>
+          <style>{`
+              .invisible-link {
+                text-align: center;
+                margin-top: 0.5rem;
+              }
+          
+              .invisible-link a {
+                color: inherit;            /* match text color to background */
+                text-decoration: none;     /* remove underline */
+                opacity: 0;                /* make it fully transparent */
+                pointer-events: auto;      /* still clickable */
+                transition: opacity 0.2s ease;
+              }
+          
+              .invisible-link a:focus {
+                opacity: 1;                /* visible only if manually focused */
+              }
+          `}</style>
     </div>
   </>
   );

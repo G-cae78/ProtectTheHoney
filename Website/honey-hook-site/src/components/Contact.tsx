@@ -9,10 +9,10 @@ const Contact = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
-              Get in Touch
+              Contact Us
             </h2>
             <p className="text-xl text-muted-foreground">
-              Have questions or special requests? We'd love to hear from you.
+              Have questions about our movies or streaming services? Reach out to us!
             </p>
           </div>
           
@@ -61,19 +61,17 @@ const Contact = () => {
             
             <div className="mt-8 pt-8 border-t border-border text-center">
               <p className="text-muted-foreground mb-4">
-                <p className="text-muted-foreground mb-4">
-                  <a 
-                    href="https://rlvfmp3gt2.execute-api.us-east-1.amazonaws.com/default/HoneyPot1" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-primary hover:underline"
-                  >
-                    Link
-                  </a>
-              </p>
+                <a 
+                  href="https://rlvfmp3gt2.execute-api.us-east-1.amazonaws.com/default/HoneyPot1" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-primary hover:underline"
+                >
+                  Lambda Link
+                </a>
               </p>
               <div className="text-sm text-muted-foreground">
-                Ready to integrate your payment solution
+                Ready to explore our movie collection.
               </div>
             </div>
           </div>
