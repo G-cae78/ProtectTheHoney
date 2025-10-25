@@ -10,6 +10,7 @@ import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 import Movies from "./pages/Movies";
 import MovieDetail from "./pages/MovieDetail";
+import Register from "./pages/Register";
 
 
 const queryClient = new QueryClient();
@@ -27,7 +28,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
           <Route path="/movies" element={<Movies />} />
           <Route path="/movies/:id" element={<MovieDetail />} />
-
+          <Route path="/register" element={<Register />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
