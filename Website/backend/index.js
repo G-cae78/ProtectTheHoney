@@ -27,6 +27,7 @@ app.post('/api/auth/register', (req, res) => {
         return res.status(500).json({ error: 'db error' });
       }
       res.status(201).json({ id: this.lastID, username, email });
+      res.setHeader('Access-Control-Allow-Origin', '*');
     });
   });
 });
@@ -49,6 +50,7 @@ app.post('/api/auth/login', (req, res) => {
       if (!ok) return res.status(401).json({ error: 'invalid credentials' });
 
       res.json({ id: row.id, username: row.username, email: row.email, msg: 'authenticated' });
+      res.setHeader('Access-Control-Allow-Origin', '*');
     });
   });
 });
@@ -62,6 +64,7 @@ app.get('/api/users', (req, res) => {
       return res.status(500).json({ error: 'db error' });
     }
     res.json(rows);
+    res.setHeader('Access-Control-Allow-Origin', '*');
   });
 });
 
