@@ -6,7 +6,7 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors({
-  origin: ['http://localhost:4173', 'https://honeystreaming.duckdns.org', "http://honeystreaming.duckdns.org", "http://44.223.54.173", "http://44.223.54.173:4173"],// your React dev server
+  origin: ['http://localhost:4173', 'https://honeystreaming.duckdns.org', 'http://honeystreaming.duckdns.org', 'http://44.223.54.173', 'http://44.223.54.173:4173'],// your React dev server
   credentials: true, // if you plan to send cookies
 }));
 app.use(bodyParser.json());
