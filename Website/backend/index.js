@@ -5,13 +5,15 @@ const db = require('./db');
 const cors = require('cors');
 
 const app = express();
+
+// CORS middleware - let it handle headers
 app.use(cors({
-  origin: '*' ,// your React dev server
-  credentials: false, // if you plan to send cookies
+  origin: '*', 
+  credentials: false,
 }));
 app.use(bodyParser.json());
 
-// Register - creates a user (email + password)
+// Register
 app.post('/api/auth/register', (req, res) => {
   const { username, email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });
@@ -26,23 +28,20 @@ app.post('/api/auth/register', (req, res) => {
         console.error(insertErr);
         return res.status(500).json({ error: 'db error' });
       }
+      // Send response after everything is ready
       res.status(201).json({ id: this.lastID, username, email });
-      res.setHeader('Access-Control-Allow-Origin', '*');
     });
   });
 });
 
-// Login - simple password check
+// Login
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });
 
   const sql = 'SELECT id, username, email, password FROM users WHERE email = ? LIMIT 1';
   db.get(sql, [email], (err, row) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'db error' });
-    }
+    if (err) return res.status(500).json({ error: 'db error' });
     if (!row) return res.status(401).json({ error: 'invalid credentials' });
 
     bcrypt.compare(password, row.password, (cmpErr, ok) => {
@@ -50,21 +49,15 @@ app.post('/api/auth/login', (req, res) => {
       if (!ok) return res.status(401).json({ error: 'invalid credentials' });
 
       res.json({ id: row.id, username: row.username, email: row.email, msg: 'authenticated' });
-      res.setHeader('Access-Control-Allow-Origin', '*');
     });
   });
 });
 
-// List users (ids + usernames only)
+// List users
 app.get('/api/users', (req, res) => {
-  const sql = 'SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT 100';
-  db.all(sql, [], (err, rows) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'db error' });
-    }
+  db.all('SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT 100', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'db error' });
     res.json(rows);
-    res.setHeader('Access-Control-Allow-Origin', '*');
   });
 });
 
