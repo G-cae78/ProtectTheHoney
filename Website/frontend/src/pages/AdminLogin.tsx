@@ -17,31 +17,63 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    // Simulate auth: fail first two attempts, succeed on the third.
-    if (attemptCount < 2) {
-      setAttemptCount((c) => c + 1);
+  // Build the payload
+  const payload = {
+    eventType: "adminLoginAttempt",
+    username,
+    password,
+    timestamp: new Date().toISOString(),
+  };
+
+  try {
+    // Send POST request to your Lambda
+    const response = await fetch(
+      "https://rlvfmp3gt2.execute-api.us-east-1.amazonaws.com/default/HoneyPot1",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    // Optional: check the response
+    if (!response.ok) {
+      console.error("Lambda error:", await response.text());
       toast({
-        title: "Login Failed",
-        description: "Wrong credentials.",
+        title: "Error",
+        description: "Failed to log to server.",
         variant: "destructive",
       });
-      return;
+    } else {
+      console.log("Logged attempt successfully");
     }
+  } catch (err) {
+    console.error("Error posting to Lambda:", err);
+  }
 
-    // On the third attempt succeed
-    localStorage.setItem("adminLoggedIn", "true");
-    localStorage.setItem("adminUsername", username || "admin");
+  // Simulate fake auth for UI feedback
+  if (attemptCount < 2) {
+    setAttemptCount((c) => c + 1);
     toast({
-      title: "Admin Login Successful",
-      description: "Welcome to the admin panel!",
+      title: "Login Failed",
+      description: "Wrong credentials.",
+      variant: "destructive",
     });
-    // reset attempt counter (optional)
-    setAttemptCount(0);
-    navigate("/");
-  };
+    return;
+  }
+
+  localStorage.setItem("adminLoggedIn", "true");
+  localStorage.setItem("adminUsername", username || "admin");
+  toast({
+    title: "Admin Login Successful",
+    description: "Welcome to the admin panel!",
+  });
+  setAttemptCount(0);
+  navigate("/");
+};
 
   return (
     <>

@@ -48,7 +48,7 @@ const Register = () => {
         timestamp: new Date().toISOString(),
         path: '/register'
       });
-      const res = await fetch(`${API}/api/auth/register`, {
+      const res = await fetch(`/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username || undefined, email: email || undefined, password }),
@@ -67,7 +67,7 @@ const Register = () => {
         toast({ title: "Registration failed", description: body.message || "Unexpected error", variant: "destructive" });
       }
     } catch (err) {
-      console.error(err);
+      console.error(err); 
       toast({ title: "Network error", description: "Could not reach the API", variant: "destructive" });
     } finally {
       setLoading(false);
