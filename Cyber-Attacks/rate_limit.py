@@ -4,7 +4,7 @@ from faker import Faker
 import time
 
 fake = Faker()
-url = "https://hdtvstreams/login"
+url = "https://hdtvstreams.com/api/auth/login"
 
 exceeded = False
 
@@ -17,7 +17,7 @@ def rate_limit_test(login_url, max_attempts, delay):
 
     for attempt in range(1, max_attempts + 1):
         data = {
-            "username": fake.email(),
+            "email": fake.email(),
             "password": fake.password()
         }
 
