@@ -45,6 +45,7 @@ class RateLimitUser(HttpUser):
         ) as response:
 
             self.request_count += 1
+
             if response.status_code == 429:
                 self.rate_limited = True
                 response.success()
@@ -53,11 +54,25 @@ class RateLimitUser(HttpUser):
                     f"[429 HIT] Public IP: {self.public_ip} | "
                     f"Requests before limit: {self.request_count}"
                 )
-                self.request_count = 0  # reset for next cycle
-            elif response.status_code in [401, 403]:
-                response.success()
+                self.request_count = 0
+
+            elif response.status_code == 403:
+                response.success()  # EXPECTED: blocked at Cloudflare edge
+                print("\n--- EDGE BLOCK ---")
+                print(f"Status: {response.status_code}")
+                print("Headers:")
+                for k, v in response.headers.items():
+                    print(f"  {k}: {v}")
+                print("\nBody (first 500 chars):")
+                print(response.text[:500])
+                print("------------------\n")
+
+            elif response.status_code == 401:
+                response.success()  # invalid credentials = expected
+
             else:
                 response.failure(f"Unexpected status: {response.status_code}")
+
 
 class StepLoadShape(LoadTestShape):
     """
