@@ -1,0 +1,15 @@
+from joblib import dump
+from pathlib import Path
+
+out = Path("artifacts")
+out.mkdir(exist_ok=True)
+
+dump(hdb, out / "hdbscan.joblib")
+dump(vectorizer, out / "tfidf.joblib")
+dump(scaler, out / "scaler.joblib")
+
+# Optional if you trained UMAP and want stable 2D coords for new windows
+# dump(umap_model, out / "umap.joblib")
+
+# Also save your feature column list so inference can't “drift”
+dump(num_cols, out / "num_cols.joblib")
