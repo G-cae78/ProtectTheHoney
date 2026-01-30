@@ -1,0 +1,2 @@
+client_ip,window_start,request_count,unique_paths,unique_methods,status_200,status_401,status_403,status_404,status_429,status_500,avg_response_size,std_response_size,paths,uas,ratio_4xx,ratio_429,ratio_5xx,path_text,cluster,cluster_strength
+193.142.147.209,2026-01-30 15:35:00+00:00,1,1,1,0,0,0,0,0,0,157.0,0.0,['/'],['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'],0.0,0.0,0.0,/,4,0.999401151100128
