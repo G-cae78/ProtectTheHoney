@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from collections import Counter
 
+import numpy as np
 import joblib
 import pandas as pd
 
@@ -87,12 +88,15 @@ def main():
     idx = idx.ravel()
     dist = dist.ravel()
 
-    assigned = labels_train[idx]
+    assigned = labels_train[idx].copy()
     strength = 1.0 - dist  # higher = more similar
 
-    # threshold: below this similarity, treat as unknown (-1)
-    SIM_THRESHOLD = 0.25
-    assigned = [int(a) if s >= SIM_THRESHOLD else -1 for a, s in zip(assigned, strength)]
+    # PERCENTILE-BASED THRESHOLDING: mark top X% farthest points as noise (-1)
+    # (same approach as notebook: keep bottom 85% by distance, mark top 15% as noise)
+    PERCENTILE_THRESHOLD = 85
+    dist_threshold = np.percentile(dist, PERCENTILE_THRESHOLD)
+    
+    assigned = [int(a) if d <= dist_threshold else -1 for a, d in zip(assigned, dist)]
 
     pred = windows.copy()
     pred["cluster"] = assigned
