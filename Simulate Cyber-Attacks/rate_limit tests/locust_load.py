@@ -22,7 +22,7 @@ def get_public_ip():
         return PUBLIC_IP
     
 class RateLimitUser(HttpUser):
-    wait_time = between(0.01, 0.03)  # aggressive but reasonable
+    wait_time = between(0.001, 0.005)  # aggressive but reasonable
     host = "https://hdtvstreams.com"
 
     def on_start(self):
@@ -74,15 +74,27 @@ class RateLimitUser(HttpUser):
                 response.failure(f"Unexpected status: {response.status_code}")
 
 
+    @task
+    def load_assets(self):
+        with self.client.get(
+            "/",
+            catch_response=True,
+            name="/"
+        ) as response:
+            if response.status_code == 200:
+                response.success()
+            else:
+                response.failure(f"Failed to load homepage: {response.status_code}")
+
 class StepLoadShape(LoadTestShape):
     """
     Gradually increases load to find rate-limit threshold
     """
 
     step_time = 1       # seconds per step
-    step_users = 2        # users added per step
-    spawn_rate = 1        # users per second
-    max_users = 1
+    step_users = 5      # users added per step
+    spawn_rate = 10       # users per second
+    max_users = 500
 
     def tick(self):
         run_time = self.get_run_time()
