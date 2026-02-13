@@ -102,4 +102,4 @@ class StepLoadShape(LoadTestShape):
         current_step = run_time // self.step_time
         users = min((current_step + 1) * self.step_users, self.max_users)
 
-        return (users, self.spawn_rate)
+        return (users, self.spawn_rate) 
