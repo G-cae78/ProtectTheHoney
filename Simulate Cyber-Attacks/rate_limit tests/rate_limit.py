@@ -35,7 +35,7 @@ def rate_limit_test(login_url, max_attempts, delay):
 
 def main():
     print("Running rate limit attack simulation...")
-    rate_limit_test(url, 100, 0.1)
+    rate_limit_test(url, 400, 0.001)
     print("Rate limit exceeded:", exceeded)
 
 if __name__ == "__main__":
