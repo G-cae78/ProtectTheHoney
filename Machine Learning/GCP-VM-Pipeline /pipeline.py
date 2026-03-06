@@ -47,7 +47,8 @@ def make_5min_windows(df: pd.DataFrame) -> pd.DataFrame:
 
     for code in [200, 401, 403, 404, 429, 500]:
         df[f"is_{code}"] = (df["HTTP Status Code"] == code).astype(int)
-        agg = (
+
+    agg = (
         df.groupby(["client_ip", "window_start"])
         .agg(
             request_count=("http_path", "size"),
