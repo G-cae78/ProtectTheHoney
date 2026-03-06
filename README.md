@@ -26,7 +26,7 @@ ProtectTheHoney/
 │
 ├── Website/
 │   ├── Index.html                  # The honeypot landing page (fake streaming site)
-│   ├── login.html                  # Fake login page — captures credentials
+│   ├── login.html                  # Fake login page, captures credentials
 │   ├── admin.html                  # Fake admin panel
 │   ├── backend/
 │   │   ├── index.js                # Express API: handles /register, /login, /users
@@ -41,7 +41,7 @@ ProtectTheHoney/
 │   └── lambda_function.py          # AWS Lambda: captures POST bodies (username/password) from login attempts
 │
 ├── Machine Learning/
-│   ├── HDBSCAN.ipynb               # Main model training notebook — trains the clustering model on nginx logs
+│   ├── HDBSCAN.ipynb               # Main model training notebook trains the clustering model on nginx logs
 │   ├── Kmeans.ipynb                # Earlier K-means experiment (superseded by HDBSCAN)
 │   ├── drift_analysis.ipynb        # Measures how much attack patterns have shifted since training
 │   ├── pipeline.py                 # Local version of the feature engineering pipeline
@@ -50,7 +50,7 @@ ProtectTheHoney/
 │   │   ├── pipeline.py             # Parses nginx logs → 5-min windows → feature matrix
 │   │   └── run_batch.py            # Cron entry point: reads new log lines, runs inference, writes rollup JSON
 │   │
-│   ├── Trained-model Artifacts/    # Saved model files (joblib) — copied to GCP instance for inference
+│   ├── Trained-model Artifacts/    # Saved model files (joblib), copied to GCP instance for inference
 │   │   ├── hdbscan.joblib          # Trained HDBSCAN model
 │   │   ├── tfidf.joblib            # TF-IDF vectoriser fitted on URL paths
 │   │   ├── scaler.joblib           # StandardScaler for numeric features
@@ -63,7 +63,7 @@ ProtectTheHoney/
 │
 ├── Simulate Cyber-Attacks/
 │   └── rate_limit tests/
-│       ├── locust_load.py          # Locust load test — simulates up to 500 concurrent users in steps
+│       ├── locust_load.py          # Locust load test simulates up to 500 concurrent users in steps
 │       └── curl_cffi_script.py     # Mimics browser TLS fingerprints to bypass bot detection
 │
 └── README.md
