@@ -12,7 +12,7 @@ ProtectTheHoney is an adaptive cybersecurity project that attempts to combine ho
 1. **Attacker hits the site** → nginx logs the request
 2. **GCP VM runs a cron job every 5 minutes** → reads new log lines, groups them into 5-minute windows per IP, extracts features
 3. **HDBSCAN model assigns each window to a known attack cluster** (e.g. `.env harvesting`, `WordPress exploitation`, `PHPUnit RCE`)
-4. **Windows too far from any cluster become noise (-1)** — likely novel or unknown attacks
+4. **Windows too far from any cluster become noise (-1)** likely novel or unknown attacks
 5. **A rollup JSON is generated** summarising what's happening and which IPs are responsible
 6. **An LLM (GPT-class model via HuggingFace)** reads the rollup and writes Cloudflare WAF rules → rules are pushed via the Cloudflare API
 7. **Login attempts on the fake site** are captured by an AWS Lambda function for credential analysis
@@ -90,7 +90,7 @@ HDBSCAN clusters these windows. The resulting 14 clusters each map to a recognis
 | 4, 5, 6, 10 | Generic login / credential stuffing |
 | 7 | Swagger / OpenAPI docs enumeration |
 | 11 | PHPUnit RCE probing (`eval-stdin.php`) |
-| -1 | Noise — doesn't fit any known pattern |
+| -1 | Noise (doesn't fit any known pattern) |
 
 At inference time, new windows are assigned to the nearest cluster using a cosine nearest-neighbour index. Windows that are too far from everything get labelled as noise (-1), which typically means a novel or one-off attack.
 
