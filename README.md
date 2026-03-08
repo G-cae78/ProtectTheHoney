@@ -133,3 +133,6 @@ scp "Machine Learning/Trained-model Artifacts/"*.joblib \
 | WAF / CDN | Cloudflare (API-driven rule creation) & BunnyCDN(for testing) |
 | LLM | HuggingFace InferenceClient (`openai/gpt-oss-120b`) |
 | Attack simulation | Locust, curl-cffi, Kali Linux(SQLMap, Hping3, h2load) |
+
+## Current Result
+![alt text](image-1.png)
