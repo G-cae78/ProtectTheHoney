@@ -112,7 +112,8 @@ A cron job runs `run_batch.py` every 5 minutes. The log file offset is saved in 
 If attack patterns drift (check with `drift_analysis.ipynb`), retrain like this:
 
 1. Run `Machine Learning/HDBSCAN.ipynb` top to bottom with updated log data
-2. Copy the new artifacts to the GCP instance:
+2. This will create new artifact files and save them under Trained Artifacts/latest
+3. Copy the new artifacts to the GCP instance:
 ```bash
 scp "Machine Learning/Trained-model Artifacts/"*.joblib \
     username@<instance-ip>:/opt/honey/artifacts/
