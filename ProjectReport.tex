@@ -1,0 +1,2761 @@
+% ============================================================
+%  Honey In The Cloud — Final Year Project Report
+%  BSc (Hons) Computer Science & Information Technology
+%  University of Galway
+% ============================================================
+
+\documentclass[12pt, a4paper]{report}   % 'report' class suits multi-chapter docs
+
+% ---------- Encoding & Fonts ----------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ---------- Page Layout ----------
+\usepackage[
+  top=2.5cm, bottom=2.5cm,
+  left=3cm,  right=2.5cm,
+  headheight=14pt
+]{geometry}
+
+% ---------- Headers & Footers ----------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\leftmark}
+\fancyhead[R]{\small Honey In The Cloud}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ---------- Colour ----------
+\usepackage[dvipsnames]{xcolor}
+\definecolor{linkblue}{RGB}{0,70,140}
+
+% ---------- Hyperlinks ----------
+\usepackage[
+  colorlinks=true,
+  linkcolor=linkblue,
+  urlcolor=linkblue,
+  citecolor=linkblue,
+  pdftitle={Honey In The Cloud},
+  pdfauthor={Chukwuma George Anayo-Ezikeoha},
+  pdfsubject={BSc Final Year Project},
+  pdfkeywords={honeypot, CDN, WAF, Cloudflare, BunnyCDN, HDBSCAN, cybersecurity}
+]{hyperref}
+
+% ---------- Mathematics ----------
+\usepackage{amsmath, amssymb}
+
+% ---------- Tables ----------
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{tabularx}
+
+% ---------- Graphics ----------
+\usepackage{graphicx}
+\graphicspath{{vertopal_0e99b85c758c4238b17cd9f53834280c/media/}}
+\usepackage{float}
+\usepackage[font=small, labelfont=bf, labelsep=period]{caption}
+
+% ---------- Lists ----------
+\usepackage{enumitem}
+\setlist{noitemsep, topsep=4pt}
+
+% ---------- Code Listings ----------
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{gray!8},
+  keywordstyle=\color{blue},
+  commentstyle=\color{green!50!black},
+  stringstyle=\color{orange!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=6pt
+}
+
+% ---------- Miscellaneous ----------
+\usepackage{parskip}          % space between paragraphs instead of indent
+\usepackage[normalem]{ulem}
+\usepackage{setspace}
+\onehalfspacing               % 1.5 line spacing (typical for reports)
+\usepackage{pdfpages}
+\usepackage{emptypage}        % suppress headers on blank pages
+
+% ---------- Chapter / Section Style ----------
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+  {\normalfont\Large\bfseries}{\chaptertitlename\ \thechapter}{12pt}{\huge}
+\titlespacing*{\chapter}{0pt}{-10pt}{20pt}
+
+% ============================================================
+%  DOCUMENT
+% ============================================================
+\begin{document}
+
+% ============================================================
+%  TITLE PAGE
+% ============================================================
+\begin{titlepage}
+  \centering
+  \vspace*{1cm}
+
+  \includegraphics[width=0.55\textwidth]{image1.png}\\[1.5cm]
+
+  {\LARGE\bfseries Honey In The Cloud}\\[0.6cm]
+  {\large Comparative CDN and WAF Security Analysis with Unsupervised Attack Classification\\
+   and Agentic Incident Response using Cloud-Based Honeypots}\\[2cm]
+
+  \begin{tabular}{rl}
+    \textbf{Programme:}  & BSc (Hons) Computer Science \& Information Technology \\[4pt]
+    \textbf{School:}     & School of Computer Science, University of Galway \\[4pt]
+    \textbf{Document:}   & Final Year Project Report \\[4pt]
+    \textbf{Date:}       & 1 April 2026 \\[4pt]
+    \textbf{Author:}     & Chukwuma George Anayo-Ezikeoha \\[4pt]
+    \textbf{Student ID:} & 22358526 \\[4pt]
+    \textbf{Supervisor:} & Dr. Enda Barrett
+  \end{tabular}
+
+  \vfill
+\end{titlepage}
+
+% ============================================================
+%  FRONT MATTER  (roman page numbers)
+% ============================================================
+\frontmatter
+
+% ---------- Abstract ----------
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+Modern web applications face increasingly sophisticated threats from automated bots,
+credential stuffing, and volumetric attacks. Cloud providers market CDNs, WAFs and
+bot mitigation services as comprehensive defences, yet there is a gap in independent,
+isolated empirical evaluation of these claims, particularly on non-enterprise tiers.
+
+This project deploys a cloud-hosted honeypot disguised as a legitimate streaming
+service to attract real-world malicious traffic, comparing Cloudflare (free-tier) and
+BunnyCDN (Advanced Shield) against identical attack scenarios. Testing revealed that
+while both platforms effectively absorbed volumetric network-layer attacks, HTTP/2
+protocol-compliant floods bypassed Cloudflare's edge in a significant proportion of
+cases. Rate limiting enforced thresholds but permitted indefinite attack cycling, and
+telemetry gaps on lower tiers limited incident visibility throughout.
+
+To complement CDN testing, an unsupervised machine learning pipeline using HDBSCAN
+clustering was trained on natural datasets accumulated from real-world logs and
+deployed to classify live honeypot traffic into behavioural attack profiles,
+identifying patterns ranging from PHP webshell deployment and path traversal probing
+to secrets harvesting, IoT device exploitation, and Exchange / RDP reconnaissance. An agentic LLM layer
+interprets these clusters and augments its context through RAG, auto-generating
+structured incident tickets, creating a lightweight closed-loop threat detection
+system.
+
+The findings demonstrate a gap between vendor security claims across different tiers
+of service and real-world effectiveness, and propose a practical, evidence-based
+approach to continuous threat monitoring.
+
+% ---------- Acknowledgements ----------
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+
+I would like to thank my project supervisor for their guidance and support throughout
+the duration of the project. A huge thank you to the School of Computer Science at
+the University of Galway for providing the academic framework within which this
+research could be conducted.
+
+I am grateful to the open-source communities behind Locust, hping3, slowhttptest,
+h2load, Scikit-learn and golden-eye, whose tools made the experimental work possible.
+I extend my gratitude to Google Cloud, Amazon Web Services, Cloudflare and BunnyCDN
+for providing accessible free and trial tiers that enabled independent security
+evaluation without enterprise licensing.
+
+Thank you to God for giving me the discipline, creativity, and fortitude to persevere
+through blockers and complete this project.
+
+% ---------- Table of Contents ----------
+\tableofcontents
+\listoffigures
+\listoftables
+
+% ============================================================
+%  MAIN MATTER  (arabic page numbers)
+% ============================================================
+\mainmatter
+
+% ============================================================
+%  CHAPTER 1 — INTRODUCTION
+% ============================================================
+\chapter{Introduction}
+
+% ---------- Project Description ----------
+\section{Project Description}
+
+One way in which defenders can learn an attacker's strategy is to dupe them into
+attacking a honeypot. The attacker believes they are attacking a production system,
+but in actual fact it is a fake entity designed to trap the attacker. As the attacker
+attempts to compromise the honeypot, we can learn about their attack strategy: what
+vectors they are using, what commands they are executing and in what order. Learning
+the attack motivation and strategy enables cybersecurity experts to harden their
+defences. If an attacker realises they are interacting with a honeypot they will
+immediately stop; building a system that emulates a real system convincingly is an
+open challenge. The goal is to keep them interacting while also learning their
+strategies.
+
+% ---------- Useful Definitions ----------
+\section{Useful Definitions}
+\label{sec:definitions}
+
+\begin{description}[leftmargin=2cm, style=nextline]
+
+  \item[Honeypot]
+    A deliberately vulnerable system designed to attract and trap attackers. It mimics
+    a legitimate production environment to deceive malicious actors, allowing defenders
+    to observe attack strategies and techniques without risking real systems.
+
+  \item[Content Delivery Network (CDN)]
+    A geographically distributed network of servers that cache and deliver web content
+    from locations closer to end users. Modern CDNs also provide DDoS protection, bot
+    mitigation, and web application firewalls.
+
+  \item[Web Application Firewall (WAF)]
+    A security solution that filters, monitors, and blocks HTTP/HTTPS traffic to and
+    from web applications based on predefined security rules. WAFs protect against SQL
+    injection, XSS, and other OWASP Top 10 vulnerabilities.
+
+  \item[CAPTCHA]
+    A challenge-response test designed to determine whether a user is human or an
+    automated bot. Common implementations include image-selection puzzles, text
+    recognition, or invisible background checks (reCAPTCHA v3).
+
+  \item[Bot]
+    An automated software application that performs repetitive tasks over the internet.
+    Bots can be benign (search engine crawlers) or malicious (credential stuffing
+    tools, web scrapers, vulnerability scanners).
+
+  \item[DoS (Denial of Service)]
+    An attack that attempts to make a machine, network, or service unavailable to its
+    intended users by overwhelming it with illegitimate requests, exhausting resources
+    such as CPU, memory, and bandwidth~\cite{stallings2003dos}.
+
+  \item[DDoS (Distributed Denial of Service)]
+    A cyberattack that attempts to overwhelm a target system, service, or network with
+    excessive traffic from multiple sources, rendering it unavailable to legitimate
+    users.
+
+  \item[Adaptive Deception Technology]
+    Security systems that dynamically adjust their behaviour and responses based on
+    attacker interactions, making honeypots more realistic and harder to detect while
+    gathering intelligence on attack strategies.
+
+  \item[Serverless Computing]
+    A cloud computing model where the cloud provider manages server infrastructure,
+    automatically allocating resources as needed. Developers deploy code without
+    managing underlying servers, paying only for actual compute time consumed.
+
+  \item[API (Application Programming Interface)]
+    A set of protocols and tools that allows different software applications to
+    communicate with each other. In web contexts, APIs enable front-end applications
+    to interact with back-end services through defined endpoints.
+
+  \item[Rate Limiting]
+    A security control that restricts the number of requests a user or IP address can
+    make to a service within a specified time period, helping prevent abuse, scraping,
+    and denial-of-service attacks.
+
+  \item[Telemetry]
+    The automated collection and transmission of data from remote sources for
+    monitoring and analysis. In security contexts, telemetry includes logs, metrics,
+    and event data used to understand system behaviour and detect threats.
+
+  \item[Challenge Page]
+    An intermediate page presented to users before granting access to a website,
+    typically containing a CAPTCHA or JavaScript verification to distinguish humans
+    from automated bots.
+
+  \item[Brute Force Attack]
+    A hacking method that involves using trial and error to crack passwords or gain
+    unauthorised access~\cite{fortinet-brute-force}.
+
+\end{description}
+
+% ---------- Introduction ----------
+\section{Introduction}
+
+Modern web applications face increasingly sophisticated threats ranging from automated
+bots to web scrapers and malicious actors constantly probing for vulnerabilities.
+Cloud service providers have responded by offering integrated security solutions such
+as Content Delivery Networks (CDNs) with built-in protection features, Web Application
+Firewalls (WAFs), and bot mitigation services. Companies like Cloudflare, Google Cloud
+and Amazon Web Services market these as comprehensive defence mechanisms capable of
+identifying and blocking malicious traffic before it reaches production systems.
+
+However, there may be a significant difference between marketing promises and
+real-world effectiveness. While these providers claim robust bot detection, DDoS
+mitigation and attack prevention, there is limited independent research evaluating
+whether these features deliver on their promises when facing genuine threats. Do
+CAPTCHAs effectively stop modern bots? Can CDN-based scraping protection actually
+prevent data harvesting? Are the various security toggles meaningfully different, or
+largely cosmetic?
+
+This project aims to address these questions through empirical analysis using adaptive
+deception technology. By deploying a cloud-based honeypot disguised as a legitimate
+streaming service (\texttt{hdtvstreams.com}), we create a controlled environment that
+attracts real malicious traffic while capturing detailed telemetry data.
+
+% ---------- Motivation ----------
+\section{Motivation}
+
+The motivation for this research stems from several observations about the current
+state of cloud security:
+
+\begin{description}[leftmargin=2.5cm, style=nextline]
+
+  \item[Market-Reality Gap]
+    Cloud providers invest heavily in marketing their security features, but
+    independent verification of these claims is scarce. There are no clear SLAs
+    specifying how effective these security offerings should be.
+
+  \item[The CAPTCHA Paradox]
+    End users are increasingly burdened with CAPTCHA challenges, sometimes multiple
+    times per session. It is not fully verified whether CAPTCHAs are security theatre
+    that inconveniences legitimate users while barely impacting malicious automation.
+
+  \item[Configuration Complexity]
+    Modern CDNs like Cloudflare offer dozens of toggleable security settings. However,
+    it is unclear which combination actually enhances security versus which are
+    redundant. This research aims to isolate and test individual features.
+
+  \item[Multi-Cloud Comparisons]
+    Organisations often employ multiple cloud providers, yet there is limited
+    comparative data on how their security offerings stack up against identical
+    threats. Does Cloudflare's bot detection outperform AWS WAF? Is Google Cloud CDN's
+    scraping protection more or less effective?
+
+  \item[Evolution of Attack Patterns]
+    CDN attack-intelligence models may be trained on older patterns; this project
+    captures contemporary attack patterns against realistic web applications.
+
+\end{description}
+
+% ---------- Research Questions ----------
+\section{Research Questions}
+
+\begin{enumerate}
+
+  \item \textbf{How effective are CDN-provided security mechanisms at detecting and
+    mitigating real-world malicious traffic when deployed on non-enterprise tiers?}
+
+  \item \textbf{How does the effectiveness of security features differ between
+    Cloudflare, AWS CloudFront/WAF, and Google Cloud CDN when exposed to identical
+    attack scenarios?}
+
+  \item \textbf{To what extent do CAPTCHAs and JavaScript challenges reduce automated
+    bot traffic without degrading legitimate user access?}
+
+  \item \textbf{Which categories of malicious traffic (e.g.\ brute force, API abuse,
+    automated scanning) are most likely to bypass CDN security controls?}
+
+  \item \textbf{What is the rate of false positives (legitimate interactions blocked
+    or challenged), and how does this differ across CDN platforms and settings?}
+
+\end{enumerate}
+
+Ultimately, this project aims to shift the conversation around cloud security from
+trust-based adoption to evidence-based evaluation. By providing transparent,
+reproducible measurements of what actually stops attacks, we enable security
+professionals to make informed decisions rather than relying on vendor assurances.
+
+% ---------- Related Work ----------
+\section{Related Work}
+\label{sec:related-work}
+
+\subsection{Cloudflare CDN Performance: A WordPress Case Study~\cite{cloudflare-wp}}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{image2.png}
+  \caption{Cloudflare Network Architecture}
+  \label{fig:cloudflare-arch}
+\end{figure}
+
+This research compared two WordPress websites with similar traffic volumes (25–33k
+monthly visitors) hosted on the same provider, with one integrated with Cloudflare
+CDN and the other using standard hosting. The Cloudflare-integrated site scored 95\%
+on performance metrics compared to 51\% for the non-CDN site, with significant
+improvements in time-to-first-byte, start render, and speed index. Memory usage also
+differed dramatically: the Cloudflare site peaked at 400\,MB and remained stable,
+while the non-CDN site repeatedly hit a 2\,GB memory limit.
+
+\subsection{Hybrid Deep Learning for Cloud Intrusion Detection~\cite{eos-ids}}
+
+An Optimal Security System for intrusion detection in cloud computing environments
+(EOS-IDS) was proposed using a three-stage process: (1) data pre-processing via an
+Improved Heap Optimisation (IHO) algorithm; (2) feature selection via a Chaotic Red
+Deer Optimisation (CRDO) algorithm; and (3) detection and classification via a Deep
+Kronecker Neural Network (CKNN). The model successfully addressed common IDS
+limitations including over-fitting, low classification accuracy, and high false
+positive rates.
+
+\subsection{Intrusion Detection Using Hybrid Deep Learning~\cite{rana2024}}
+
+This MSc research by Kunal Rana investigated ML and deep learning for intrusion
+detection using the UNSW-NB15 dataset (nine attack types across 49 features). The
+study combined traditional ML (logistic regression, decision trees) with LSTM,
+bidirectional LSTM, and autoencoders. Bi-LSTM combined with autoencoders significantly
+outperformed traditional methods, emphasising the importance of algorithm selection
+and feature extraction strategies.
+
+\subsection{Concept Drift Detection via Pre-Clustering~\cite{concept-drift}}
+
+This work on concept drift detection via pre-clustering and statistical testing
+directly informs the drift monitoring approach used in the HDBSCAN pipeline
+(Section~\ref{sec:drift}).
+
+\medskip
+Taken together, these works highlight two consistent gaps in the literature: the lack
+of empirical CDN security evaluation under real attack conditions, and the predominance
+of supervised or benchmark-independent approaches to traffic classification. This
+project addresses both by combining live honeypot deployment with unsupervised
+learning on naturally accumulated traffic data.
+
+% ============================================================
+%  CHAPTER 2 — SYSTEM DESIGN & ARCHITECTURE
+% ============================================================
+\chapter{System Design and Architecture}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image3.png}
+  \caption{Honeypot Service — High-Level Architecture}
+  \label{fig:arch}
+\end{figure}
+
+\section{Honeypot Design}
+\label{sec:honeypot-design}
+
+A legitimate domain (\url{https://hdtvstreams.com}) was purchased and equipped with a
+valid SSL/TLS certificate. The certificate significantly increased traffic to the
+honeypot: many automated scanning tools and botnets prioritise HTTPS-enabled sites
+because they appear more legitimate~\cite{siteguarding} and are more likely to contain
+valuable data. The presence of a real domain rather than a bare IP address also
+makes the honeypot visible to broader DNS-based bot reconnaissance sweeps.
+
+Within days of deploying the domain and certificate, traffic increased noticeably,
+demonstrating how adding security measures (while essential for protecting legitimate
+services) paradoxically makes a honeypot more effective by making it indistinguishable
+from a real production application.
+
+The honeypot is deployed on a Google Cloud Platform (GCP) virtual machine instance.
+To ensure 24/7 availability without requiring an open SSH session, NGINX acts as a
+reverse proxy and static file server, while PM2 (a production process manager for
+Node.js) keeps the SQLite backend running as a daemon, automatically restarting on
+crash.
+
+The application also uses an AWS Lambda function to log interaction events through
+the frontend to CloudWatch. When triggered, the Lambda records basic request details
+(source IP, request headers, event type) and checks the IP against public reputation
+and blacklist sources.
+
+\section{CDN-Fronted Architecture}
+
+All incoming traffic is routed through the CDN before reaching the honeypot. This
+allows direct observation of how requests are handled at the CDN layer: blocked
+outright, challenged, or forwarded to the backend depending on the active
+configuration.
+
+Suspicious requests that reach the application are logged using a serverless pipeline
+triggered via an API gateway. Metadata including request paths, headers, IP addresses,
+user agents, and timestamps is recorded and stored centrally for later analysis. This
+ensures consistent data collection across all test phases. The CDN remains the primary
+security control under evaluation, while the honeypot acts as a passive observation
+point.
+
+\section{Software Tools}
+
+\subsection{Development Tools}
+
+\begin{itemize}
+  \item Visual Studio Code
+  \item BurpSuite
+  \item Postman
+\end{itemize}
+
+\subsection{Amazon Web Services (AWS)}
+
+\begin{description}[leftmargin=3cm, style=nextline]
+
+  \item[Lambda]
+    Serverless computing service that executes logging code on trigger, records attack
+    attempts, checks IP addresses against blacklists, and captures request
+    metadata~\cite{aws-lambda}.
+
+  \item[API Gateway]
+    Creates the HTTP endpoint embedded in the Vue.js frontend and acts as the trigger
+    for the Lambda function. The hidden endpoint captures bot interactions that normal
+    users would not trigger~\cite{aws-gateway}.
+
+  \item[CloudWatch]
+    Stores all Lambda execution logs, which are reviewed to explain malicious traffic
+    patterns and other honeypot interactions~\cite{aws-cloudwatch}.
+
+  \item[EC2]
+    Hosts the honeypot web application. Also served as the initial deployment target
+    before migration to GCP~\cite{aws-ec2}.
+
+  \item[CloudFront / WAF]
+    AWS's CDN and Web Application Firewall. Used as a third CDN for comparison
+    against Cloudflare and Google Cloud CDN~\cite{aws-cloudfront}.
+
+\end{description}
+
+\subsection{Google Cloud Services}
+
+\begin{description}[leftmargin=3cm, style=nextline]
+
+  \item[Cloud Domains]
+    Used to manage DNS records for the \texttt{hdtvstreams.com} domain, pointing
+    traffic to the honeypot infrastructure.
+
+  \item[Cloud CDN]
+    Google's globally distributed CDN, tested as a further comparison point against
+    Cloudflare's security features.
+
+  \item[Compute Engine (GCP VM)]
+    Hosts the production honeypot; replaced the original EC2 instance in January 2026.
+
+\end{description}
+
+\subsection{Cloudflare}
+
+Primary CDN under evaluation, routing all traffic through their network to
+empirically test the effectiveness of bot detection, CAPTCHA challenges, DDoS
+protection, and other marketed security features against real-world attacks.
+
+\subsection{Attack \& Penetration Testing Tools}
+
+All offensive tests were run from a Kali Linux virtual machine:
+
+\begin{itemize}
+  \item \textbf{hping3} — network packet manipulation tool~\cite{kali-hping3}
+  \item \textbf{slowhttptest} — application-layer slow HTTP attack simulator~\cite{kali-slowhttp}
+  \item \textbf{h2load} — HTTP/2 benchmarking and load testing tool~\cite{nghttp2-h2load}
+  \item \textbf{GoldenEye} — HTTP DoS testing tool~\cite{kali-goldeneye}
+  \item \textbf{SQLMap} — automated SQL injection testing tool
+  \item \textbf{Ghauri} — WAF-bypass-focused SQL injection framework
+  \item \textbf{Locust} — open-source Python load testing framework~\cite{locust}
+\end{itemize}
+
+\section{Preliminary Research Findings}
+
+\subsection{Traffic Observations}
+
+\begin{itemize}
+  \item The hidden API endpoint was mostly hit by automated scrapers and LLM bots —
+        surprisingly non-malicious in nature.
+  \item Real attacks targeted backend endpoints directly, skipping the frontend
+        entirely.
+  \item Mass exploit scans probing for exposed Laravel/PHPUnit endpoints were
+        detected early.
+  \item IP reputation checks worked well to flag suspicious sources.
+\end{itemize}
+
+\subsection{Cloudflare Free Tier — Baseline}
+
+\begin{itemize}
+  \item Gathered baseline data on what actually gets blocked versus what passes
+        through.
+  \item Tracked CAPTCHA frequency and whether bots could bypass challenges.
+  \item Recorded when rate limits triggered.
+  \item Tested whether different security settings produced measurably different
+        results.
+\end{itemize}
+
+\subsection{Attack Patterns Identified Early}
+
+\begin{itemize}
+  \item Automated scanners probing for vulnerable frameworks.
+  \item Login brute-force attempts.
+  \item Random bot crawling with varied user agents.
+  \item Direct API attacks that completely ignored the frontend.
+\end{itemize}
+
+% ============================================================
+%  CHAPTER 3 — RESEARCH & EXPERIMENTATION
+% ============================================================
+\chapter{Research and Experimentation}
+
+\section{Methodology}
+\label{sec:methodology}
+
+This project follows an experimental, empirical research approach by observing how
+real-world attacks interact with CDN security controls. Rather than relying solely on
+documentation or synthetic attack tools, the method focuses on measuring how CDN
+features behave when exposed to genuine malicious traffic from the public internet.
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image7.png}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image8.png}
+  \end{minipage}
+  \caption{Cloudflare Service Plans and Offerings}
+  \label{fig:cloudflare-plans}
+\end{figure}
+
+Cloudflare was selected as the primary CDN platform due to its popularity and the
+availability of a well-featured free tier; many small and medium-sized organisations
+rely on this tier in production, making it a realistic evaluation target. The scope is
+therefore limited to security features available without enterprise licensing. The
+following components are tested:
+
+\begin{itemize}
+  \item DDoS mitigation
+  \item Web Application Firewall (WAF) with managed rules
+  \item Bot protection mechanisms, including JavaScript challenges and CAPTCHA
+  \item Basic rate limiting and request filtering
+\end{itemize}
+
+% ============================================================
+\section{Cloudflare}
+
+\subsection{Setup and Configuration}
+
+Setting up Cloudflare to front the honeypot was straightforward. The process began
+by adding the domain to Cloudflare, which automatically scanned and displayed existing
+DNS records. After verifying that these records pointed to the GCP instance IP address
+(\texttt{34.51.232.105}), ownership verification was completed by updating the
+domain's nameservers at the registrar (GCP Cloud Domains / Squarespace) to point to
+Cloudflare's nameservers.
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image9.png}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image10.png}
+  \end{minipage}
+  \caption{Default Name Servers vs Cloudflare Name Servers}
+  \label{fig:nameservers}
+\end{figure}
+
+Once the nameserver changes propagated, Cloudflare began proxying traffic to the
+honeypot. DNS lookups now return Cloudflare's edge IPs
+(\texttt{172.67.213.165} and \texttt{104.21.23.209}) rather than the origin GCP IP.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{image11.png}\\[6pt]
+  \includegraphics[width=0.7\textwidth]{image12.png}
+  \caption{Default IP vs Cloudflare Edge IP (DNS Lookup Comparison)}
+  \label{fig:cloudflare-ip}
+\end{figure}
+
+\subsection{Rate Limiting with Locust}
+\label{sec:cf-rate-limiting}
+
+\subsubsection{Overview}
+
+To validate Cloudflare's rate-limiting protections, load testing was conducted using
+Locust~\cite{locust}, an open-source Python-based performance testing framework chosen
+for its developer-friendly, code-based test definitions and gevent-based concurrency,
+enabling a single process to simulate thousands of concurrent users.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image13.png}
+  \caption{Locust Load Test Results}
+  \label{fig:locust-results}
+\end{figure}
+
+\subsubsection{Test Setup}
+
+A single simulated user repeatedly attempted to log into the honeypot's authentication
+endpoint (\texttt{/api/auth/login}) using randomly generated credentials from the
+Faker library~\cite{faker}. The wait time between requests was set to 10–30\,ms to
+simulate an aggressive automated attack. HTTP~429 responses were treated as successful
+outcomes (rate limiter functioning correctly), and the script captured and logged the
+attacking IP (\texttt{140.203.12.65}) and the exact request count before each trigger.
+
+\subsubsection{Results}
+
+The Cloudflare rate-limiting rule was configured to trigger after 100 requests from a
+single IP within a 10-second window, blocking that IP for 10 seconds (the maximum
+available on free tier). The first trigger occurred at approximately 108 requests,
+validating the threshold.
+
+\subsubsection{Security Implications}
+\label{sec:cf-rate-implications}
+
+While the initial 100-request burst was blocked, the same IP could immediately
+resume attack cycles after each 10-second timeout. Over 24 hours, this theoretically
+permits up to 864,000 credential attempts (100 requests every 10 seconds = 36,000 per
+hour). Cloudflare does not natively support permanent or escalating blocks based on
+repeated violations; custom solutions using the Cloudflare API are required for
+persistent blocking~\cite{cf-community-blocking}.
+
+\subsubsection{Potential Solutions}
+
+\begin{enumerate}
+  \item Increase the maximum block duration (up to 1 hour via WAF rules interface) to
+        reduce daily attempts from hundreds of thousands to at most 2,400.
+  \item Implement progressive penalties: trigger a 1-hour block after five consecutive
+        violations of the 10-second window rule.
+  \item Build a custom solution using Cloudflare's API in conjunction with a Lambda
+        function to permanently block IPs that repeatedly exceed the threshold.
+\end{enumerate}
+
+% ============================================================
+\subsection{DDoS Protection}
+\label{sec:cf-ddos}
+
+\subsubsection{Overview}
+
+Cloudflare holds a 4.5-star rating based on 246 verified reviews on Gartner Peer
+Insights~\cite{gartner-cf}. Its DDoS protection operates across multiple layers; the
+two primary categories relevant to this testing are:
+
+\begin{itemize}
+  \item \textbf{SSL/TLS DDoS protection} — application-layer attacks targeting SSL
+        handshakes and HTTP/HTTPS services.
+  \item \textbf{Network-layer DDoS protection} — Layer 3/4 volumetric attacks (TCP SYN
+        floods, UDP floods, ICMP floods). Mitigated automatically at Cloudflare's edge
+        using its 477\,Tbps network capacity across 330+ cities~\cite{cf-ddos}.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image18.png}
+  \caption{Cloudflare DDoS Protection Tiers}
+  \label{fig:cf-ddos-tiers}
+\end{figure}
+
+% ----- 3.2.4.1 TCP SYN Flood -----
+\subsubsection{TCP SYN Flood (Layer 4)}
+
+\paragraph{Overview}
+
+A TCP SYN flood exploits the TCP three-way handshake by sending a high volume of SYN
+packets with spoofed source IPs, resulting in half-open connections. The server waits
+for final ACKs that never arrive, exhausting its connection table and preventing
+legitimate connections~\cite{cf-syn-flood}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{image20.png}
+  \caption{TCP SYN Flood Exploitation}
+  \label{fig:syn-exploit}
+\end{figure}
+
+\paragraph{Attack Setup}
+
+\begin{itemize}
+  \item \textbf{Target:} Honeypot on GCP, fronted by Cloudflare.
+  \item \textbf{Tool:} hping3 on Kali Linux VM.
+  \item \textbf{Monitoring:} Nginx server logs, Cloudflare real-time analytics, GCP
+        observability dashboard.
+\end{itemize}
+
+\begin{lstlisting}[language=bash, caption={hping3 TCP SYN Flood Commands}]
+sudo hping3 -S --flood -p 80 --rand-source <target-IP>
+sudo hping3 -S -i u100 -p 80 hdtvstreams.com
+\end{lstlisting}
+
+\paragraph{Results}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{image22.png}
+  \caption{Resource Utilisation During SYN Flood}
+  \label{fig:syn-resources}
+\end{figure}
+
+CPU utilisation remained unaffected; the regular spikes visible in the dashboard are
+due to pre-existing scripts. Network traffic showed a minor increase, peaking at only
+17.21\,KiB/s at the origin — negligible for a production-grade service. SYN-ACK
+responses were initially returned from Cloudflare's edge IP (\texttt{172.67.213.165}),
+confirming the handshake was handled at the edge, not the origin. As the flood
+intensified, intermittent ``ICMP Network Unreachable'' messages appeared, suggesting
+additional filtering was triggered.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{image24.png}
+  \caption{ICMP Network Unreachable During SYN Flood}
+  \label{fig:syn-icmp}
+\end{figure}
+
+\paragraph{Analysis}
+
+Cloudflare absorbed and mitigated the SYN flood before it could affect the origin
+server. The stable CPU and negligible network utilisation at the origin confirm
+effective edge mitigation. However, the lack of telemetry on the free tier makes it
+difficult to diagnose root causes or understand the exact mitigation path.
+
+% ----- UDP Flood -----
+\subsubsection{UDP Flood (Layer 4)}
+
+\paragraph{Overview}
+
+UDP is a connectionless ``fire-and-forget'' protocol: unlike TCP, no acknowledgement
+packets are involved. A UDP flood sends massive packet volumes without maintaining
+connection state, targeting random ports and forcing the server to generate ICMP
+``Destination Unreachable'' responses for each, consuming bandwidth and CPU.
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image26.png}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image27.png}
+  \end{minipage}
+  \caption{UDP Spoofing vs Normal UDP Interaction}
+  \label{fig:udp-comparison}
+\end{figure}
+
+\paragraph{Attack Setup}
+
+\begin{itemize}
+  \item \textbf{Target:} Honeypot on GCP, fronted by Cloudflare.
+  \item \textbf{Tool:} hping3 on Kali Linux VM.
+\end{itemize}
+
+\begin{lstlisting}[language=bash, caption={hping3 UDP Flood Commands}]
+sudo hping3 -2 --flood -p 80 --rand-source <target-IP>
+sudo hping3 -2 -i u100 --spoof -p 80 hdtvstreams.com
+sudo hping3 -2 -i u100 -p 80 hdtvstreams.com
+\end{lstlisting}
+
+\paragraph{Results}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{image28.png}
+  \caption{Resource Utilisation During UDP Flood}
+  \label{fig:udp-resources}
+\end{figure}
+
+CPU utilisation was completely unaffected. Network traffic showed only a minor
+increase. Across all test variations, 100\% packet loss was observed — not a single
+UDP packet received a response — indicating Cloudflare is silently dropping
+non-DNS UDP traffic at the edge.
+
+Notably, during one run the attacking machine was itself rate-limited for
+approximately 30 seconds. Replacing the \texttt{--flood} flag with the \texttt{-i}
+interval flag prevented further rate limiting while still permitting up to 1 million
+UDP packets at 1k packets/second.
+
+\paragraph{Analysis}
+
+Silent edge-level drops mean network-layer UDP floods never generate dashboard events
+on free-tier plans. While the protection functioned correctly, the complete absence of
+logging prevents post-incident analysis.
+
+% ----- SSL/TLS DDoS -----
+\subsubsection{SSL/TLS DDoS — SlowHTTPTest (Layer 7)}
+
+\paragraph{Overview}
+
+Slow HTTP attacks exploit the way web servers handle concurrent connections: legitimate
+HTTP connections are opened but data is sent intentionally at low rates, holding
+connections open and exhausting the server's connection pool. SlowHTTPTest supports
+Slowloris (slow headers), Slow HTTP POST (slow body), and slow-read attack modes.
+
+\paragraph{Attack Setup}
+
+\begin{itemize}
+  \item \textbf{Target:} Honeypot on GCP, fronted by Cloudflare.
+  \item \textbf{Tool:} slowhttptest on Kali Linux VM.
+\end{itemize}
+
+\begin{lstlisting}[language=bash, caption={hping3 UDP Flood Commands}]
+slowhttptest -c 1000 -H -g -o slow_reprt -i 10 r -r 200 -t GET -u https://hdtvstreams.com -x 24 -p 3
+\end{lstlisting}
+
+\paragraph{Results}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{image32.png}
+  \caption{Resource Utilisation During Slow HTTP Attack}
+  \label{fig:slowhttp-resources}
+\end{figure}
+
+CPU and network traffic were completely unaffected. With 1,000 connections attempted,
+all connections were initially kept open for approximately 10 seconds before Cloudflare
+began automatically closing them. When scaled to 5,000 connections, the defence
+mechanism activated earlier.
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image33.png}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image34.png}
+  \end{minipage}
+  \caption{SlowHTTPTest Attack Progression — 1,000 Connections}
+  \label{fig:slowhttp-1000}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image35.png}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image36.png}
+  \end{minipage}
+  \caption{SlowHTTPTest Attack Progression — 5,000 Connections}
+  \label{fig:slowhttp-5000}
+\end{figure}
+
+Table~\ref{tab:slowhttp-phases} summarises the five mitigation phases observed:
+
+\begin{table}[H]
+  \centering
+  \caption{SlowHTTPTest Attack Phases and Cloudflare Response (5,000 connections)}
+  \label{tab:slowhttp-phases}
+  \begin{tabularx}{\textwidth}{lXXXXX}
+    \toprule
+    \textbf{Seconds} & \textbf{Closed} & \textbf{Pending} & \textbf{Connected}
+      & \textbf{Available} & \textbf{Phase} \\
+    \midrule
+    0  & 0     & 1 & 0     & 5000 & Baseline \\
+    20 & 365   & 4 & 966   & 5000 & Rapid Connection Growth \\
+    40 & 1731  & 4 & 1248  & 5000 & Sustained High Pressure \\
+    60 & 3390  & 5 & 1296  & 5000 & Peak Load (Pre-Mitigation) \\
+    \textbf{64} & \textbf{3730} & \textbf{0} & \textbf{1270} & \textbf{5000}
+      & \textbf{⚠ Defence Trigger} \\
+    80 & {\raise.17ex\hbox{$\scriptstyle\sim$}}4941 & 0 & 0 & 5000 & Attack Neutralised \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\paragraph{Analysis}
+
+Despite Cloudflare clearly responding with progressive connection termination and
+eventual complete blocking, \textbf{no DDoS analytics events appeared in the
+dashboard}. This silent-protection gap limits post-incident analysis and means
+administrators have no way to know when their service was under attack.
+
+% ----- H2Load -----
+\subsubsection{HTTP/2 Flood — H2Load (Layer 7)}
+\label{sec:h2load-cf}
+
+\paragraph{Overview}
+
+H2Load is a benchmarking tool for HTTP/2, HTTP/1.1, and HTTP/3 protocols, developed
+as part of the nghttp2 project~\cite{nghttp2-h2load}. Critically, it uses the
+system's OpenSSL library, producing valid TLS fingerprints and legitimate SNI
+extensions. This forces CDN systems to process requests rather than drop them as
+malformed packets, making H2Load a more realistic Layer 7 defence test.
+
+\paragraph{Test Command}\mbox{}\\[4pt]
+
+\begin{lstlisting}[language=bash, caption={H2Load Test Command}]
+h2load -n 10000 -c 100 -m 10 https://hdtvstreams.com
+\end{lstlisting}
+
+\paragraph{Results}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{image38.png}
+  \caption{Resource Utilisation During H2Load}
+  \label{fig:h2load-resources}
+\end{figure}
+
+CPU utilisation increased 3× and network traffic 500× during attack periods. The
+initial test (10,000 requests, 100 concurrent clients) achieved a 100\% success rate.
+When scaled to 100,000 requests, Cloudflare's rate limiting activated but only
+blocked 68,356 requests — 31,644 (31.6\%) still reached the origin. On a repeated
+identical run, 56,801 requests succeeded, demonstrating inconsistency in Cloudflare's
+mitigation response.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image39.png}
+  \caption{H2Load Request Statistics Across Test Runs}
+  \label{fig:h2load-stats}
+\end{figure}
+
+\paragraph{Analysis}
+
+Unlike previous attacks, H2Load generated visible security events in Cloudflare's
+dashboard and triggered an automated notification email~(Figure~\ref{fig:cf-ddos-event}).
+However, the 31–60\% bypass rate across runs demonstrates that legitimate-protocol
+Layer 7 traffic poses a greater challenge to CDN-based DDoS protection than volumetric
+network-layer attacks.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{image40.png}
+  \caption{Cloudflare DDoS Dashboard Event (H2Load)}
+  \label{fig:cf-ddos-event}
+\end{figure}
+
+% ----- DDoS Summary Table -----
+\subsubsection{DDoS Attack Pattern Summary — Cloudflare}
+\label{sec:cf-ddos-summary}
+
+\begin{table}[H]
+  \centering
+  \caption{DDoS Test Results Summary for Cloudflare Free Tier}
+  \label{tab:cf-ddos-summary}
+  \begin{tabularx}{\textwidth}{lllXXX}
+    \toprule
+    \textbf{Attack Type} & \textbf{Tool} & \textbf{Layer}
+      & \textbf{Origin Impact} & \textbf{Edge Mitigation} & \textbf{Disruption} \\
+    \midrule
+    SYN Flood  & hping3       & L4 & None       & Yes            & No \\
+    UDP Flood  & hping3       & L4 & None       & Yes            & No \\
+    ICMP Flood & hping3       & L3 & None       & Yes            & No \\
+    HTTP Flood & GoldenEye    & L7 & Minimal    & Yes            & No \\
+    Slow HTTP  & slowhttptest & L7 & Minimal    & Partial        & No \\
+    SSL Flood  & thc-ssl-dos  & L7 & Low        & Partial        & No \\
+    HTTP/2 Flood & h2load     & L7 & Noticeable & Less effective & Latency / CPU spike \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+% ============================================================
+%  INSERT THIS SECTION AFTER \subsection{WAF Rule Test — Geographic Blocking}
+%  and BEFORE \section{BunnyCDN}
+%  Label: sec:cf-sqli
+% ============================================================
+
+\subsection{SQL Injection Testing — Cloudflare Free Tier}
+\label{sec:cf-sqli}
+
+\subsubsection{Overview}
+
+SQL injection remains one of the most prevalent and dangerous web application
+vulnerabilities, consistently appearing in the OWASP Top 10~\cite{owasp-waf}.
+This test evaluated whether Cloudflare's free-tier WAF managed rules would detect
+and block automated SQL injection tooling against the honeypot's login endpoint
+(\texttt{/login} and \texttt{/api/auth/login}), using both the industry-standard
+SQLMap scanner and the WAF-bypass-focused Ghauri framework. All tests were conducted
+from a Kali Linux virtual machine.
+
+\begin{itemize}
+  \item \textbf{Attack OS:} Kali Linux
+  \item \textbf{Tools:} SQLMap (v1.10.2) and Ghauri (v1.4.3)
+  \item \textbf{Interception:} Burp Suite Community Edition
+  \item \textbf{Target:} \url{https://hdtvstreams.com} via Cloudflare Free Tier Edge
+\end{itemize}
+
+% ----- Test 1 -----
+\subsubsection{Test 1 — Automated Form Discovery}
+
+\begin{lstlisting}[language=bash, caption={SQLMap Form Discovery}]
+sqlmap -u https://hdtvstreams.com/login --forms --batch
+\end{lstlisting}
+
+\paragraph{Result}
+
+SQLMap returned HTTP~405 (Method Not Allowed) responses throughout the scan. Without
+a \texttt{--data} flag, the tool had no POST body to target and defaulted to probing
+the \texttt{Referer} and \texttt{Host} headers instead of the intended form fields.
+No injection point was identified. More significantly, \textbf{no Cloudflare WAF
+event was triggered} and no block page was returned — the 405 response originated
+entirely from the origin server's Nginx configuration, not from any CDN-layer
+filtering. The SQLMap default user-agent passed through the Cloudflare edge without
+challenge.
+
+% ----- Test 2 -----
+\subsubsection{Test 2 — Aggressive Payload Injection}
+
+\begin{lstlisting}[language=bash, caption={SQLMap Aggressive Test — Maximum Risk and Level}]
+sqlmap -u https://hdtvstreams.com/login \
+  --data="email=test@example.com&password=test" \
+  --risk 5 --level 5 \
+  --batch
+\end{lstlisting}
+
+\paragraph{Result}
+
+With \texttt{--data} supplied, SQLMap correctly targeted the \texttt{email} and
+\texttt{password} POST body parameters. The \texttt{--level 5} flag additionally
+enabled header injection testing across \texttt{User-Agent}, \texttt{Referer}, and
+\texttt{Host}. SQLMap reported both POST parameters as ``not dynamic'' — the server
+returned an identical response body regardless of payload content — depriving the
+tool of the differential signal required for detection. The scan concluded with no
+injectable parameters found.
+
+Critically, \textbf{zero Cloudflare WAF security events were generated} across the
+entire run. Risk~5 / Level~5 is the most exhaustive SQLMap configuration, producing
+a high volume of highly characteristic SQL injection payloads in the POST body;
+none were flagged, blocked, or challenged by Cloudflare's managed ruleset.
+
+% ----- Test 3 -----
+\subsubsection{Test 3 — Evasion with Tamper Scripts and Random User Agent}
+
+\begin{lstlisting}[language=bash, caption={SQLMap with Tamper Scripts and Random Browser UA}]
+sqlmap -u https://hdtvstreams.com/login \
+  --data="email=test@example.com&password=test" \
+  --tamper=randomcase,space2comment,charencode \
+  --random-agent \
+  --batch
+\end{lstlisting}
+
+\paragraph{Result}
+
+This test introduced two evasion techniques simultaneously: tamper scripts to
+obfuscate payloads (case randomisation, comment-space substitution, and URL character
+encoding), and \texttt{--random-agent} to replace SQLMap's identifiable default
+user-agent with a randomised real browser string.
+
+The \texttt{--random-agent} flag produced the most significant finding of the entire
+Cloudflare SQL injection test series. With a browser-like user agent, all requests
+bypassed the Cloudflare edge without any challenge and hit the origin server directly.
+The Cloudflare traffic dashboard recorded \textbf{59,950 requests originating from a
+single Irish IP address} (ASN~1213 — HEAnet, \texttt{140.203.12.65}) with
+\textbf{zero mitigation actions applied}. Every request detail entry showed
+``Suspicious activity: None'' and ``Mitigation: Not mitigated''
+(Figures~\ref{fig:cf-sqli-dashboard} and~\ref{fig:cf-sqli-detail}).
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{cf_sqli_source_ips.png}
+    \caption*{Source IPs: 59.95k requests, single IP}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{cf_sqli_countries.png}
+    \caption*{Country breakdown: Ireland 59.95k, France 1.01k, India 113}
+  \end{minipage}
+  \caption{Cloudflare Traffic Dashboard During SQLMap \texttt{--random-agent} Run}
+  \label{fig:cf-sqli-dashboard}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{cf_sqli_request_detail.png}
+  \caption{Cloudflare Request Detail — Mitigation: Not Mitigated; Suspicious Activity: None}
+  \label{fig:cf-sqli-detail}
+\end{figure}
+
+This result demonstrates that Cloudflare's free-tier WAF has no payload-level SQL
+injection detection independent of user-agent heuristics. Switching from SQLMap's
+default UA to any browser string was sufficient to remove all friction.
+
+% ----- Test 4 -----
+\subsubsection{Test 4 — Ghauri WAF-Bypass Framework}
+
+\begin{lstlisting}[language=bash, caption={Ghauri with POST Request File and Random UA}]
+ghauri -r post.txt --random-agent --batch --ignore-code 401
+\end{lstlisting}
+
+\paragraph{Result}
+
+Ghauri initially returned 401 Unauthorized responses; adding \texttt{--ignore-code 401}
+instructed the tool to proceed regardless. Ghauri tested a comprehensive range of
+injection techniques — error-based, boolean-based blind, time-based blind, and
+stacked queries — across both \texttt{email} and \texttt{password} fields. The run
+concluded with:
+
+\begin{lstlisting}
+[CRITICAL] all tested parameters do not appear to be injectable.
+\end{lstlisting}
+
+As with all SQLMap runs, \textbf{no Cloudflare WAF rule fired} and no security event
+appeared in the dashboard. Ghauri is specifically designed to bypass WAF fingerprinting;
+its evasion techniques proved unnecessary given that Cloudflare's free tier generated
+no detectable response to any of the injected payloads.
+
+\subsubsection{Analysis}
+
+Across all four test runs — spanning basic form discovery, maximum-aggression payload
+injection (\texttt{--risk 5 --level 5}), multi-technique tamper-script evasion, and a
+dedicated WAF-bypass framework — Cloudflare's free-tier WAF generated
+\textbf{zero security events} and applied \textbf{zero mitigations}.
+
+Two independent factors explain why no successful injection occurred despite the
+complete absence of WAF intervention:
+
+\begin{enumerate}
+  \item \textbf{Parameterised queries.} The Node.js backend uses SQLite with
+        parameterised statements (\texttt{db.get("SELECT * FROM users WHERE email = ?
+        AND password = ?", [email, password])}), which are structurally immune to SQL
+        injection regardless of WAF coverage.
+  \item \textbf{Uniform server responses.} The login endpoint returned an identical
+        response body for all inputs, preventing injection tools from obtaining the
+        differential signal required for blind injection detection.
+\end{enumerate}
+
+The critical security implication is that an identical application using string-concatenated
+queries would have been \textbf{fully exposed}: Cloudflare's free-tier managed rules
+provided no payload-level detection across any of the four scenarios. A simple
+\texttt{--random-agent} flag was sufficient to ensure 59,950 requests reached the
+origin with no challenge applied. This represents a meaningful gap in the free-tier
+WAF's out-of-the-box SQL injection coverage, with the application's own parameterised
+queries acting as the sole effective defence.
+
+\begin{table}[H]
+  \centering
+  \caption{SQL Injection Test Results Summary — Cloudflare Free Tier}
+  \label{tab:cf-sqli-summary}
+  \small
+  \begin{tabularx}{\textwidth}{lXXX}
+    \toprule
+    \textbf{Test} & \textbf{Tool / Flags} & \textbf{WAF Response} & \textbf{Outcome} \\
+    \midrule
+    Form discovery
+      & SQLMap \texttt{--forms --batch}
+      & Malicious dashboard event; partial block
+      & 405 from origin Nginx; no injection found \\
+    \addlinespace
+    Aggressive injection
+      & SQLMap \texttt{--risk 3 --level 5}
+      & Malicious dashboard event; no block
+      & Parameters non-injectable; uniform responses \\
+    \addlinespace
+    Tamper + random UA
+      & SQLMap \texttt{--tamper} \texttt{--random-agent}
+      & Dashboard Event; 59.95k requests unmitigated
+      & All requests reached origin; zero challenges \\
+    \addlinespace
+    WAF-bypass tool
+      & Ghauri \texttt{--random-agent} \texttt{--ignore-code 401}
+      & Dashboard event; no mitigation
+      & Parameters non-injectable; no DB identified due to database parameteised queries \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+% ============================================================
+\subsection{WAF Rule Test — Geographic Blocking}
+\label{sec:cf-geo}
+
+\subsubsection{Setup}
+
+A custom WAF rule was implemented to block all requests originating from Ireland
+(country code \texttt{IE}).
+
+\subsubsection{Results}
+
+Accessing the honeypot from an Irish IP immediately returned Cloudflare's block page
+in both standard and incognito modes. Programmatic testing via Locust confirmed HTTP
+403 responses with Cloudflare-specific headers (\texttt{Server: cloudflare},
+\texttt{CF-RAY: 9c1e5134afa8bde8-DUB}). The \texttt{-DUB} suffix indicates the
+request was handled at Cloudflare's Dublin PoP. Zero Nginx log entries were generated
+for blocked requests.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image43.png}
+  \caption{WAF Geographic Block Page Shown in Browser}
+  \label{fig:waf-geo-block}
+\end{figure}
+
+\subsubsection{VPN Bypass}
+
+Connecting through a VPN server outside Ireland immediately allowed access, with
+requests appearing to originate from the VPN server's location.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image44.png}\\[4pt]
+  \includegraphics[width=\textwidth]{image45.png}\\[4pt]
+  \caption{Postman Request Output With and Without VPN}
+  \label{fig:waf-vpn-bypass}
+\end{figure}
+
+\subsubsection{Analysis}
+
+Geographic blocking effectively reduces attack surface from regions with no legitimate
+users and is resource-efficient. However, IP-based location is a weak identifier for
+a determined adversary: VPN and proxy services trivially bypass it.
+
+% ============================================================
+\section{BunnyCDN}
+\label{sec:bunnycdn}
+
+\subsection{Overview}
+
+BunnyCDN (now Bunny.net) was founded in 2015 and is headquartered in Ljubljana,
+Slovenia — giving it European jurisdiction relevant to GDPR and data sovereignty.
+Bunny.net operates 119 PoPs across six continents with capacity exceeding 150\,Tbps
+and an average global latency of 25\,ms~\cite{european-tech-bunny}. Its security
+offering, Bunny Shield, combines WAF, DDoS mitigation, bot detection, rate limiting,
+access control lists, and upload scanning.
+
+For this project, the Advanced Shield tier was used (with \$20 free credit), providing
+access to 255 base WAF rules, an AI-powered WAF learning mode, bot mitigation, curated
+threat access lists, and upload scanning.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{image49.png}
+  \caption{Bunny.net Subscription Tiers}
+  \label{fig:bunny-tiers}
+\end{figure}
+
+\subsection{Setup and Configuration}
+
+Setting up Bunny.net followed a process similar to Cloudflare: the domain was added
+to Bunny's pull zone dashboard, nameservers were updated to \texttt{coco.bunny.net}
+and \texttt{kiki.bunny.net}, and once propagated, DNS lookups returned Bunny.net's
+edge IP (\texttt{87.249.137.52}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image50.png}
+  \caption{Domain Lookup After Fronting with Bunny.net}
+  \label{fig:bunny-dns}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image51.png}
+  \caption{Updated Nameservers After Fronting with Bunny.net}
+  \label{fig:bunny-ns}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image52.png}
+  \caption{Request Limits for the Advanced Shield Plan}
+  \label{fig:bunny-limits}
+\end{figure}
+
+\subsection{Rate Limiting}
+\label{sec:bunny-rate}
+
+\subsubsection{Test Setup}
+
+Bunny.net rate limiting was evaluated in three phases using Locust (500 concurrent
+users, \texttt{/api/auth/login} POST requests and homepage GET requests). Tests were
+run both before and after a rule was configured to block for 30 seconds when an IP
+exceeded 300 requests per minute. To isolate rate-limiting behaviour from bot
+fingerprinting (Locust's default Python user-agent is immediately challenged), a
+Python script using the \texttt{curl-cffi} library with the \texttt{chrome110}
+impersonation flag was also used.
+
+\subsubsection{Results}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{image53.png}
+  \caption{Locust Request Results — Before Rate Limiting Rule}
+  \label{fig:bunny-before-rl}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image54.png}
+  \caption{Locust Request Results — After Rate Limiting Rule}
+  \label{fig:bunny-after-rl}
+\end{figure}
+
+Without a rule, RPS climbed steadily to \textasciitilde380 and plateaued, with
+\textasciitilde50\% failures from bot detection. After the 300 req/min rule was
+applied, RPS built normally then collapsed sharply from \textasciitilde300 to near
+zero almost immediately. P95 response times spiked to over 18,000\,ms — the signature
+of edge-level blocking rather than throttling.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{image55.png}
+  \caption{Locust Chart — Before Rate Limiting Rule}
+  \label{fig:bunny-chart-before}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image56.png}
+  \caption{Locust Chart — After Rate Limiting Rule}
+  \label{fig:bunny-chart-after}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{image57.png}
+  \caption{Bunny Shield Dashboard Event Logs}
+  \label{fig:bunny-events}
+\end{figure}
+
+\subsubsection{Analysis}
+
+Unlike Cloudflare's 10-second maximum block on the free tier, Bunny.net Advanced
+offers block durations from 30 seconds to 1 hour, giving administrators meaningful
+control over persistent attackers without custom automation. Additionally, Bunny
+Shield's managed rules classified randomly generated credentials containing SQL-like
+characters as MSSQL injection attempts — demonstrating more aggressive out-of-the-box
+detection than Cloudflare's free tier.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{image61.png}
+  \caption{Bunny Shield Dashboard — WAF Rule Violation Event}
+  \label{fig:bunny-waf-event}
+\end{figure}
+
+\subsection{DDoS Protection}
+\label{sec:bunny-ddos}
+
+BunnyCDN's WAF provides five configurable DDoS sensitivity tiers; testing was
+conducted at the ``Lowest'' level to establish baseline behaviour.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image62.png}
+  \caption{Bunny Shield DDoS Sensitivity Tiers}
+  \label{fig:bunny-ddos-tiers}
+\end{figure}
+
+% ============================================================
+%  REPLACE the existing \subsubsection{TCP SYN Flood} and
+%  \subsubsection{UDP Flood} blocks (and the \clearpage between them)
+%  under \subsection{DDoS Protection} in the BunnyCDN section with
+%  the content below.
+% ============================================================
+
+\subsubsection{TCP SYN Flood and UDP Flood (Layer 4)}
+
+Both network-layer flood attacks were conducted using hping3 with the same commands
+used against Cloudflare, allowing a direct side-by-side comparison.
+
+\paragraph{TCP SYN Flood}
+A SYN flood exploits the TCP three-way handshake by sending a high volume of SYN
+packets, exhausting the target's connection table with half-open connections that
+never complete.
+
+\begin{lstlisting}[language=bash, caption={hping3 TCP SYN Flood Commands}]
+sudo hping3 -S --flood -p 80 --rand-source <target-IP>
+sudo hping3 -S -i u100 -p 80 hdtvstreams.com
+\end{lstlisting}
+
+\paragraph{UDP Flood}
+UDP is connectionless and stateless; a flood sends massive packet volumes to random
+ports, forcing the server to generate ICMP ``Destination Unreachable'' responses for
+each, consuming bandwidth and CPU.
+
+\begin{lstlisting}[language=bash, caption={hping3 UDP Flood Commands}]
+sudo hping3 -2 --flood -p 80 --rand-source <target-IP>
+sudo hping3 -2 -i u100 --spoof -p 80 hdtvstreams.com
+sudo hping3 -2 -i u100 -p 80 hdtvstreams.com
+\end{lstlisting}
+
+\paragraph{Results}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{image63.png}
+  \caption{hping3 Logs During SYN and UDP Flood Testing — 100\% Packet Loss}
+  \label{fig:bunny-hping-logs}
+\end{figure}
+
+Both attacks produced identical results across every run:
+
+\begin{itemize}
+  \item \textbf{100\% packet loss} — not a single SYN or UDP packet received a
+        response from either the edge or the origin.
+  \item \textbf{Zero CPU and network impact} at the origin — the GCP instance
+        remained completely unaffected throughout both tests.
+  \item At points during both runs, hping3 was \textbf{unable to resolve the target
+        host entirely}, suggesting BunnyCDN applied temporary IP-level blocking on top
+        of packet filtering — a more aggressive response than silent dropping alone.
+\end{itemize}
+
+\paragraph{Analysis}
+
+BunnyCDN absorbed both Layer 4 floods entirely at the edge, with no traffic reaching
+the origin server. Unlike Cloudflare, which returned SYN-ACK responses before
+beginning to filter, BunnyCDN dropped all packets silently from the first request —
+indicating filtering occurs upstream of the TCP handshake. The temporary host
+resolution failures observed during both floods suggest an additional IP-level
+throttling mechanism beyond standard packet filtering. However, as with Cloudflare's
+handling of network-layer attacks, \textbf{neither the SYN flood nor the UDP flood
+generated any dashboard events} — silent mitigation at this layer means
+administrators would have no visibility into the attack without external monitoring.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{image66.png}
+  \caption{Temporary IP Block / Rate Limiting During Network-Layer Flood Tests}
+  \label{fig:bunny-syn-block}
+\end{figure}
+
+\clearpage
+\subsubsection{Slow HTTP (SlowHTTPTest)}
+
+The slowhttptest tool was executed in Slow Headers mode against the BunnyCDN-protected
+domain. The tool attempted to establish 1,000, 10,000, 200, and 65,535 concurrent slow
+HTTP connections, each sending partial headers over a 240-second test window.
+
+\paragraph{Resource Utilisation}
+
+No requests reached the origin service. CPU utilisation at the origin was zero ---
+attack traffic was absorbed entirely at the CDN edge before reaching the application.
+Network traffic analysis confirmed the same: no slow-header packets reached the
+origin's network interface, indicating upstream filtering by BunnyCDN.
+
+\paragraph{Attack Tool Observations}
+
+The slowhttptest tool saves results to an HTML report and a CSV file, visualising how
+connections behaved over time across each run. A clear pattern emerges across all
+three runs: at approximately the 55--60 second mark, BunnyCDN begins aggressively
+closing connections, and this behaviour repeats consistently regardless of the
+connection count (1,000, 10,000, or 65,535). Before that threshold a small number of
+connections hang in a connected state, but once the window closes they are cut off
+rapidly. This suggests BunnyCDN enforces a hard timeout policy at the edge: connections
+that have been sitting idle or sending partial headers for roughly a minute are
+terminated, rather than being dropped immediately upon detection.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{image71.png}
+  \caption{SlowHTTPTest Report --- Run 1}
+  \label{fig:bunny-slow-run1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{image72.png}
+  \caption{SlowHTTPTest Report --- Run 2}
+  \label{fig:bunny-slow-run2}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{image73.png}
+  \caption{SlowHTTPTest Report --- Run 3}
+  \label{fig:bunny-slow-run3}
+\end{figure}
+
+\paragraph{Limitations}
+
+Whilst testing BunnyCDN's connection limits, an attempt was made to open 1,000,000
+concurrent connections; however the tool's built-in ceiling of 65,539 constrained the
+maximum theoretical attack volume achievable in this environment. The true resilience
+ceiling of BunnyCDN against larger-scale slow-header floods therefore remains untested.
+The test was also conducted from a single source IP, which makes detection and blocking
+significantly easier for a CDN than a distributed attack originating from many sources
+would.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{image74.png}
+  \caption{Console Error When Attempting More Than 65,539 Connections}
+  \label{fig:bunny-slow-limit}
+\end{figure}
+
+\paragraph{BunnyCDN Protection}
+
+Bunny Shield demonstrated effective mitigation of the slowhttptest attack. The
+dashboard recorded 293 bot-detection events during the test window, most of which
+were challenged, with zero requests attributed to DDoS mitigation. This indicates
+that the traffic was classified as automated bot activity rather than a volumetric
+DDoS, and was handled accordingly. The combination of edge-level connection
+termination and bot-detection classification prevented any attack traffic from
+reaching the origin, resulting in no measurable impact on CPU or network resources.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{image76.png}
+  \caption{Bunny Shield Response to SlowHTTPTest}
+  \label{fig:bunny-slow-response}
+\end{figure}
+
+\clearpage
+
+\subsubsection{H2Load (HTTP/2 Flood)}
+\label{sec:bunny-h2load}
+
+The same H2Load configuration used against Cloudflare was applied here:
+
+\begin{itemize}
+  \item Requests: 10,000 / 100,000
+  \item Concurrent Clients: 100
+  \item Max Concurrent Streams: 10
+  \item Protocol: HTTP/2 (TLS\_AES\_256\_GCM\_SHA384)
+\end{itemize}
+
+\paragraph{Test 1 — Initial Probe}
+
+2,800 of 10,000 requests succeeded, with 7,007 failed. TLS negotiation succeeded and
+HTTP/2 was confirmed. Some filtering was already active.
+
+\paragraph{Test 2 — Escalated Detection}
+
+Completed in 20.3\,s; only 912 of 10,000 requests succeeded. Connection times
+averaged 238\,ms, suggesting throttling or challenge mechanisms.
+
+\paragraph{Test 3 — Full Block}
+
+100,000 requests: 0 succeeded, all returned 0 bytes. Connections were refused
+immediately at network/firewall level before any HTTP response was generated.
+
+\paragraph{Test 4 — IP-level Rate Limiting}
+
+Source IP was fully banned at infrastructure level; all connections dropped
+instantly.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{image78.png}
+  \caption{H2Load Console Errors After IP Block}
+  \label{fig:bunny-h2load-errors}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{image79.png}
+  \caption{GCP Instance Resource Utilisation During H2Load}
+  \label{fig:bunny-h2load-resources}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image80.png}
+  \caption{Bunny CDN Dashboard Response to H2Load Tests}
+  \label{fig:bunny-h2load-dashboard}
+\end{figure}
+
+\subsubsection{Analysis}
+
+Bunny.net Shield uses a progressive mitigation strategy: initial light filtering →
+challenge mechanisms → connection throttling → hard IP block. This layered approach
+proved more effective than Cloudflare against H2Load, ultimately reaching a complete
+block by the fourth run.
+
+\clearpage
+\subsection{SQL Injection Testing}
+\label{sec:bunny-sqli}
+
+\subsubsection{Setup}
+
+\begin{itemize}
+  \item Attack OS: Kali Linux
+  \item Tools: SQLMap (v1.10.2) and Ghauri (v1.4.3)
+  \item Interception: Burp Suite Community Edition
+  \item Target: \url{https://hdtvstreams.com} via Bunny.net Edge
+\end{itemize}
+
+\subsubsection{Results}
+
+\paragraph{Test 1 — Automated Form Discovery (SQLMap)}\mbox{}\\[4pt]
+
+\begin{lstlisting}[language=bash, caption={SQLMap Form Discovery}]
+sqlmap -u https://hdtvstreams.com/login --forms --batch
+\end{lstlisting}
+
+SQLMap's user-agent signature was immediately identified via WAF Rule ID 913100:
+``Found User-Agent associated with security scanner''.
+
+\paragraph{Test 2 — Aggressive Payload Injection} \mbox{}\\[4pt]
+
+\begin{lstlisting}[language=bash, caption={SQLMap Aggressive Test}]
+sqlmap -u https://hdtvstreams.com/login \
+  --data="email=test@example.com&password=test" \
+  --risk 5 --level 5
+\end{lstlisting}
+
+WAF Rule ID 942230 fired: ``conditional SQL injection attempts''. JSON payloads
+containing nested CASE statements were caught and blocked.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image85.png}
+  \caption{WAF Log --- Captured SQLMap Payload}
+  \label{fig:sqlmap-waf}
+\end{figure}
+
+\paragraph{Test 3 — Evasion Attempts (Tamper Scripts)} \mbox{}\\[4pt]
+
+\begin{lstlisting}[language=bash, caption={SQLMap with Tamper Scripts}]
+sqlmap -u [URL] --data="[DATA]" \
+  --tamper=randomcase,space2comment,charencode --batch
+\end{lstlisting}
+
+The libjection module (WAF Rule ID 942100) normalised the obfuscated traffic and
+identified the underlying SQL injection pattern.
+
+\paragraph{Test 4 — Ghauri with Burp Suite POST Request} \mbox{}\\[4pt]
+
+\begin{lstlisting}[language=bash, caption={Ghauri Test Using Captured POST Request}]
+ghauri -r post.txt --batch
+\end{lstlisting}
+
+No tool managed to identify the database type, let alone enumerate tables.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image86.png}
+  \caption{Bunny Shield Event Log for Ghauri Exploit}
+  \label{fig:ghauri-event}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image87.png}
+  \caption{Request Interception with Burp Suite}
+  \label{fig:burpsuite-intercept}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image88.png}
+  \caption{Dashboard Showing Specific WAF Rule Infringements}
+  \label{fig:bunny-waf-rules}
+\end{figure}
+
+\subsubsection{Analysis}
+
+Bunny Shield demonstrated consistent, layered detection across all four test
+scenarios. In Log mode, all attacks were flagged; switching to Block mode terminated
+all flagged requests at the edge with no traffic forwarded to the origin.
+
+% ============================================================
+\section{Security Comparison: Cloudflare vs BunnyCDN}
+\label{sec:comparison}
+
+\begin{table}[H]
+  \centering
+  \caption{Cloudflare Free Tier vs Bunny.net Advanced Shield — Comparative Results}
+  \label{tab:comparison}
+  \small
+  \begin{tabularx}{\textwidth}{llXXX}
+    \toprule
+    \textbf{Category} & \textbf{Attack} & \textbf{Cloudflare Free} & \textbf{Bunny Advanced} & \textbf{Key Observations} \\
+    \midrule
+    Rate Limiting & Credential Stuffing
+      & ✔ Triggers at 100 req/10 s; ✖ Max 10 s block; ✖ Indefinite cycling
+      & ✔ Triggers at 300 req/min; ✔ 30 s–1 h blocks; ✔ Hard cut-off
+      & Bunny provides longer blocks and harder shutdown behaviour. \\
+    \addlinespace
+    L3 DDoS & ICMP Flood
+      & ✔ Edge mitigation; ✖ No dashboard events
+      & ✔ Edge mitigation; ✖ No detailed logs
+      & Both fully absorbed attack before origin impact. \\
+    \addlinespace
+    L4 DDoS & SYN Flood
+      & ✔ Edge mitigation; 17 KiB/s peak at origin; ✖ No events
+      & ✔ 100\% packet loss; ✔ Temporary IP block; ✔ Zero origin impact
+      & Bunny appeared more aggressive (temporary source blocking). \\
+    \addlinespace
+    L4 DDoS & UDP Flood
+      & ✔ Silent drop; ✔ 100\% loss; ✖ No events
+      & ✔ 100\% loss; ✔ Temporary source blocking
+      & Both strong at volumetric network-layer filtering. \\
+    \addlinespace
+    L7 DDoS & Slow HTTP
+      & ✔ Progressive mitigation; ✔ Defence trigger \textasciitilde64 s; ✖ No dashboard alert
+      & ✔ Edge timeout policy; ✔ 293 bot events logged
+      & Cloudflare silent; Bunny classified as bot activity. \\
+    \addlinespace
+    L7 DDoS & HTTP/2 Flood
+      & ⚠ 31–60\% traffic reached origin; ✔ Email + dashboard alert
+      & ✔ Progressive to full block by run 4; ✔ IP-level ban
+      & Bunny escalated to complete block; Cloudflare inconsistent. \\
+    \addlinespace
+    Bot Detection & Scripted Requests
+      & ⚠ Many passed without challenge
+      & ✔ Immediate fingerprint detection; ✔ Managed challenge
+      & Bunny Shield more aggressive. \\
+    \addlinespace
+    WAF & SQL Injection (SQLMap / Ghauri)
+      & ✖ Zero WAF events across all 4 tests; ✖ No payload detection; ✖ \texttt{--random-agent} bypassed all heuristics (59.95k unmitigated requests)
+      & ✔ Rule 913100 fired on SQLMap UA; ✔ Rule 942230 fired on payloads; ✔ libjection normalised tamper obfuscation; ✔ All 4 tests logged and blocked
+      & Cloudflare free tier generated no SQLi events; Bunny Advanced Shield caught every test scenario. \\
+    \addlinespace
+    Geo Blocking & Country Block
+      & ✔ Edge-level 403; ✔ Never reached origin; ✖ VPN bypass trivial
+      & Not tested
+      & IP-based filtering is effective but easily bypassed. \\
+    \addlinespace
+    Telemetry & ---
+      & ✖ Limited logging; ✖ Silent mitigation; ✔ Email for HTTP DDoS only
+      & ✔ Granular WAF logs; ✔ Clear rule violation logging
+      & Bunny Advanced provides stronger forensic visibility. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+% ============================================================
+%  CHAPTER 4 — TRAFFIC PATTERN ANALYSIS
+% ============================================================
+\chapter{Traffic Pattern Analysis}
+
+\section{Overview}
+
+The aim of this phase is to analyse live honeypot traffic in five-minute windows,
+using these request buckets to group similar request patterns and generate actionable
+security insights. By clustering logs, high-volume bot behaviour and targeted
+malicious activity can be identified to prevent exploitation of potential
+vulnerabilities. An unsupervised clustering approach works in the right ``adaptive''
+direction: it can highlight new anomalies as they arise and provide references to
+similar previous attacks, speeding up attack identification and surfacing new
+malicious behaviour.
+
+\section{Clustering Approach}
+
+\subsection{Algorithm 1: K-Means Clustering}
+
+\subsubsection{Overview}
+
+K-Means is a popular unsupervised machine learning algorithm that partitions a dataset
+into a pre-specified $k$ clusters, each defined by a centroid (the average position of
+all its members). The algorithm iterates: randomly initialise $k$ centroids, assign
+each point to the nearest centroid, recalculate centroids, and repeat until convergence.
+
+\subsubsection{Pre-processing}
+
+Client IPs and timestamps were extracted from raw honeypot logs, then traffic was
+aggregated into 5-minute time windows per IP. Features included request counts,
+unique path counts, status code distributions (401, 403, 404, 200), and TF-IDF
+vectors of request sequences. Numerical features were standardised using scikit-learn's
+\texttt{StandardScaler}~\cite{sklearn-scaler}; TF-IDF vectors were horizontally
+stacked. The dataset was split 70:30 (431 training / 185 test samples).
+
+\subsubsection{Model Training}
+
+The elbow method was used to determine optimal $k$ (tested 2–10 clusters). The
+optimal value was identified as $k=5$.
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image90.png}
+  \end{minipage}\hfill
+  \begin{minipage}{0.50\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{image91.png}
+  \end{minipage}
+  \caption{Elbow Method and K-Means Training Result Summary}
+  \label{fig:kmeans-elbow}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{image92.png}
+  \caption{K-Means PCA Cluster Visualisation}
+  \label{fig:kmeans-pca}
+\end{figure}
+
+\subsubsection{Limitations}
+
+K-Means creates spherical clusters with hard boundaries, forcing every point into a
+cluster regardless of whether it represents genuine attack behaviour or noise.
+The PCA visualisation (Figure~\ref{fig:kmeans-pca}) highlights fragmentation: points
+assigned to the same cluster occupy widely separated regions of the feature space.
+These limitations prompted a transition to HDBSCAN.
+
+% ============================================================
+\subsection{Algorithm 2: HDBSCAN Clustering}
+
+\subsubsection{Overview}
+
+HDBSCAN~\cite{sklearn-hdbscan} (Hierarchical Density-Based Spatial Clustering of
+Applications with Noise) addresses K-Means' limitations: it discovers clusters based
+on density variations, automatically determines the number of clusters, identifies
+noise points (labelled $-1$), and handles clusters of varying shapes and densities.
+
+The algorithm: (1) calculates core distances based on the $k$-th nearest neighbour;
+(2) constructs a mutual-reachability distance graph; (3) builds a minimum spanning
+tree; (4) converts it into a hierarchy of connected components (dendrogram); (5)
+extracts stable clusters using the Excess of Mass method.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{image93.png}
+  \caption{Dendrogram Produced During HDBSCAN Hierarchical Clustering}
+  \label{fig:dendrogram}
+\end{figure}
+
+\subsubsection{Advantages for Security Applications}
+
+\begin{itemize}
+  \item Explicitly identifies noise (label $-1$), distinguishing genuine attack
+        patterns from random benign traffic.
+  \item Handles clusters of varying densities — essential when different attack types
+        exhibit vastly different activity levels.
+  \item Multi-scale pattern detection via the cluster hierarchy captures reconnaissance
+        followed by escalated exploitation as related patterns.
+  \item Parameters (\texttt{min\_cluster\_size}, \texttt{min\_samples}) have direct
+        security interpretations: minimum attack footprint worth investigating and
+        sensitivity to isolated suspicious events.
+\end{itemize}
+
+\section{Model Training Results}
+
+\subsection{Overview}
+
+HDBSCAN produced substantially improved, analytically useful clusters compared to
+K-Means. The UMAP projections show compact, well-separated clusters with clear
+behavioural patterns.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{image94.png}
+  \caption{3-D UMAP Projection of Trained HDBSCAN Model}
+  \label{fig:umap-3d}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{image95.png}
+  \caption{Endpoint Frequency Heatmap Per Cluster}
+  \label{fig:endpoint-heatmap}
+\end{figure}
+
+The endpoint frequency heatmap (Figure~\ref{fig:endpoint-heatmap}) reveals that each
+cluster exhibits a distinct endpoint signature, demonstrating strong behavioural
+coherence.
+
+\subsection{Cluster Labels and Analysis}
+\label{sec:cluster-analysis}
+
+\begin{table}[H]
+  \centering
+  \caption{HDBSCAN Cluster Labels with Confidence Scores (Retrained Model)}
+  \label{tab:clusters}
+  \small
+  \begin{tabularx}{\textwidth}{cXcX}
+    \toprule
+    \textbf{Cluster} & \textbf{Label} & \textbf{Conf.} & \textbf{Secondary Labels} \\
+    \midrule
+    $-1$ & PHP webshell deployment / backdoor probe      & 0.342 & PHPUnit RCE probing; Generic login discovery \\
+      0  & Path traversal / directory escape probe       & 0.723 & --- \\
+      1  & Git / source code exposure scan               & 0.774 & GeoServer / infrastructure admin probe; Secrets discovery \\
+      2  & Generic login discovery / credential targeting & 0.929 & Cisco / VPN / firewall probe; IoT exploit scan \\
+      3  & Favicon / robots.txt fingerprinting           & 0.784 & PHP webshell deployment / backdoor probe \\
+      4  & Favicon / robots.txt fingerprinting           & 0.820 & --- \\
+      5  & Favicon / robots.txt fingerprinting           & 0.873 & --- \\
+      6  & Uncategorized / miscellaneous scanning        & 0.000 & --- \\
+      7  & PHP webshell deployment / backdoor probe      & 0.377 & Cloud metadata / config exposure; WordPress exploitation \\
+      8  & PHP webshell deployment / backdoor probe      & 0.029 & Cloud metadata / config exposure \\
+      9  & Exchange / Autodiscover / RDP probe           & 0.229 & Secrets discovery; Generic login discovery \\
+     10  & PHP webshell deployment / backdoor probe      & 0.036 & --- \\
+     11  & Exchange / Autodiscover / RDP probe           & 0.254 & Generic login discovery \\
+     12  & PHP webshell deployment / backdoor probe      & 0.955 & WordPress exploitation / admin enumeration \\
+     13  & Legitimate application traffic                & 0.598 & Secrets discovery; Cloud metadata / config exposure \\
+     14  & IoT / embedded device exploit scan            & 0.220 & Exchange / Autodiscover probe; GeoServer probe \\
+     15  & Uncategorized / miscellaneous scanning        & 0.000 & --- \\
+     16  & IoT / embedded device exploit scan            & 0.202 & Cloud metadata / config exposure; Exchange probe \\
+     17  & IoT / embedded device exploit scan            & 0.023 & Cisco / VPN / firewall probe \\
+     18  & Secrets discovery (.env harvesting)           & 0.851 & PHP webshell probe; PHP info/config discovery \\
+     19  & Secrets discovery (.env harvesting)           & 0.190 & Cisco / VPN probe; SonicWall SSLVPN probe \\
+     20  & Secrets discovery (.env harvesting)           & 0.496 & PHP webshell probe; Cloud metadata / config exposure \\
+     21  & WordPress exploitation / admin enumeration    & 1.000 & PHP webshell probe; ACME challenge path abuse \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsubsection{Attack Distribution Summary}
+
+Retraining on the expanded dataset produced 22 clusters (plus a noise group),
+reflecting a richer and more granular threat landscape than the initial model:
+
+\begin{enumerate}[label=\alph*.]
+  \item \textbf{PHP Webshell / Backdoor Probing} (clusters $-1$, 7, 8, 10, 12):
+        The dominant attack category, with attackers scanning for accessible PHP
+        backdoors to establish persistent access.
+  \item \textbf{Secrets Discovery --- .env Harvesting} (clusters 18, 19, 20):
+        Systematic attempts to retrieve environment files containing API keys,
+        database credentials, and application secrets.
+  \item \textbf{IoT / Embedded Device Exploitation} (clusters 14, 16, 17):
+        Exploitation attempts targeting router, camera, and embedded device admin
+        interfaces (HNAP, GPON, Hikvision, goform endpoints).
+  \item \textbf{Exchange / Autodiscover / RDP Probing} (clusters 9, 11):
+        Scanning for exposed Microsoft Exchange, OWA, and RDP services — a common
+        ransomware initial-access vector.
+  \item \textbf{Generic Login / Credential Targeting} (cluster 2):
+        Broad scanning for login panels across multiple frameworks.
+  \item \textbf{Favicon / robots.txt Fingerprinting} (clusters 3, 4, 5):
+        Passive reconnaissance to identify technology stack before active exploitation.
+  \item \textbf{Git / Source Code Exposure} (cluster 1):
+        Scanning for exposed \texttt{.git} directories that could leak full source
+        code and embedded credentials.
+  \item \textbf{Path Traversal / Directory Escape} (cluster 0):
+        Attempts to escape the web root and access sensitive system files such as
+        \texttt{/etc/passwd}.
+  \item \textbf{WordPress Exploitation} (cluster 21):
+        Enumeration of WordPress admin paths and exploitation of WP core files.
+  \item \textbf{Legitimate Traffic} (cluster 13):
+        Normal application traffic; suppressed from alerting unless anomalous
+        signals appear.
+  \item \textbf{Uncategorized / Miscellaneous} (clusters 6, 15):
+        Scanning activity that did not match any known attack pattern.
+\end{enumerate}
+
+\subsubsection{Severity Classification}
+
+\begin{table}[H]
+  \centering
+  \caption{Cluster Severity Ratings (Retrained Model)}
+  \label{tab:severity}
+  \small
+  \begin{tabularx}{\textwidth}{cXcX}
+    \toprule
+    \textbf{Cluster} & \textbf{Label} & \textbf{Conf.} & \textbf{Severity} \\
+    \midrule
+    $-1$ & PHP webshell / backdoor probe      & 0.342 & \textbf{Critical} \\
+      0  & Path traversal / directory escape  & 0.723 & \textbf{Critical} \\
+      7  & PHP webshell / backdoor probe      & 0.377 & \textbf{Critical} \\
+      8  & PHP webshell / backdoor probe      & 0.029 & \textbf{Critical} \\
+     10  & PHP webshell / backdoor probe      & 0.036 & \textbf{Critical} \\
+     12  & PHP webshell / backdoor probe      & 0.955 & \textbf{Critical} \\
+      1  & Git / source code exposure scan    & 0.774 & High \\
+      9  & Exchange / Autodiscover / RDP probe & 0.229 & High \\
+     11  & Exchange / Autodiscover / RDP probe & 0.254 & High \\
+     14  & IoT / embedded device exploit scan & 0.220 & High \\
+     16  & IoT / embedded device exploit scan & 0.202 & High \\
+     17  & IoT / embedded device exploit scan & 0.023 & High \\
+     18  & Secrets discovery (.env harvesting) & 0.851 & High \\
+     19  & Secrets discovery (.env harvesting) & 0.190 & High \\
+     20  & Secrets discovery (.env harvesting) & 0.496 & High \\
+     21  & WordPress exploitation              & 1.000 & High \\
+      2  & Generic login / credential targeting & 0.929 & Medium \\
+      3  & Favicon / robots.txt fingerprinting & 0.784 & Low \\
+      4  & Favicon / robots.txt fingerprinting & 0.820 & Low \\
+      5  & Favicon / robots.txt fingerprinting & 0.873 & Low \\
+      6  & Uncategorized / miscellaneous       & 0.000 & Low \\
+     15  & Uncategorized / miscellaneous       & 0.000 & Low \\
+     13  & Legitimate application traffic      & 0.598 & Info \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Model Testing and Drift Analysis}
+\label{sec:drift}
+
+After fitting and fine-tuning, the retrained model was evaluated against a withheld
+test dataset. Performance was measured by the \textit{cluster drift score}: the
+Euclidean distance between training and test cluster centroids in UMAP space. Higher
+scores indicate greater behavioural drift or novel attack patterns in the test window;
+lower scores confirm that a cluster represents a stable, repeatable tactic.
+
+\begin{table}[H]
+  \centering
+  \caption{Cluster Drift Scores After Testing (Retrained Model, sorted by drift)}
+  \label{tab:drift}
+  \begin{tabular}{lSSSS}
+    \toprule
+    \textbf{Cluster} & \textbf{UMAP x} & \textbf{UMAP y} & \textbf{UMAP z} & \textbf{Drift Score} \\
+    \midrule
+     4  &  44.957128 & 11.870636 &  6.747134 & 14.526147 \\
+     2  &  24.913916 &  5.581988 &  0.859545 &  7.486253 \\
+    11  &  11.897444 &  0.345456 &  2.958475 &  3.531601 \\
+    13  &   0.031693 &  0.679325 &  1.656599 &  1.790756 \\
+    20  &   0.106773 &  1.697355 &  0.416053 &  1.750861 \\
+    $-1$ &  0.470403 &  1.612247 &  0.024043 &  1.679642 \\
+    20  &   0.300752 &  1.401953 &  0.426247 &  1.495865 \\
+     5  &   0.792748 &  0.599638 &  0.949964 &  1.374936 \\
+    18  &   0.612942 &  0.478292 &  0.624942 &  0.997503 \\
+    19  &   0.142550 &  0.102555 &  0.855991 &  0.873819 \\
+    12  &   0.171323 &  0.406830 &  0.122215 &  0.458038 \\
+    14  &   0.400525 &  0.018703 &  0.192242 &  0.444665 \\
+     3  &   0.040725 &  0.376230 &  0.215489 &  0.435480 \\
+    16  &   0.297522 &  0.170392 &  0.132258 &  0.367484 \\
+     6  &   0.248292 &  0.194670 &  0.021723 &  0.316255 \\
+    11  &   0.048236 &  0.224376 &  0.206218 &  0.308540 \\
+     7  &   0.219868 &  0.027002 &  0.178785 &  0.284667 \\
+    17  &   0.148715 &  0.235938 &  0.030113 &  0.280517 \\
+    15  &   0.011355 &  0.162050 &  0.159172 &  0.227431 \\
+    10  &   0.063951 &  0.085261 &  0.078014 &  0.132082 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Clusters 4 and 2 exhibit the highest drift scores (14.53 and 7.49 respectively),
+suggesting that favicon fingerprinting and generic login-targeting traffic shifted
+the most between training and test windows — likely reflecting the opportunistic,
+tool-driven nature of these scans where attackers rotate tooling frequently.
+Cluster $-1$ (noise/webshell probing) shows a moderate drift of 1.68, consistent
+with evolving backdoor payload lists. The majority of clusters, particularly the
+stable attack types such as .env harvesting (cluster 18, drift 1.00), IoT probing
+(cluster 14, drift 0.44), and WordPress exploitation (cluster 21, not represented
+in test window), show low drift scores confirming that these represent persistent,
+repeatable tactics rather than one-off anomalies. Monitoring drift scores over time
+provides a practical trigger for model retraining when scores begin to climb
+consistently across multiple clusters.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{image96.png}
+  \caption{UMAP Visualisation of Cluster Drift After Testing (Blue = Training, Red = Test)}
+  \label{fig:drift-umap}
+\end{figure}
+
+% ============================================================
+%  CHAPTER 5 — IMPLEMENTATION
+% ============================================================
+\chapter{Implementation}
+
+\section{Overview}
+
+The Jupyter Notebook pipeline was converted into two production Python scripts:
+\begin{itemize}
+  \item \href{https://github.com/G-cae78/ProtectTheHoney/blob/main/Machine\%20Learning/GCP-VM-Pipeline\%20/run_batch.py}{\texttt{run\_batch.py}}
+  \item \href{https://github.com/G-cae78/ProtectTheHoney/blob/main/Machine\%20Learning/GCP-VM-Pipeline\%20/pipeline.py}{\texttt{pipeline.py}}
+\end{itemize}
+
+Dependencies were packaged and deployed to the GCP virtual machine. A cron job
+triggers the clustering pipeline every 5 minutes on the most recent web traffic logs.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image97.png}
+  \caption{Prediction Summary and Rollup Output on GCP Instance}
+  \label{fig:pipeline-output}
+\end{figure}
+
+\section{Pipeline Deployment}
+
+\subsection{Output Files}
+
+Each pipeline execution produces two outputs:
+
+% --- rollup.json ---
+\paragraph{rollup.json}
+Contains cluster assignments for all traffic observed in the previous 5-minute
+period, including top targeted paths, cluster strength, and noise rate.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image98.png}
+  \caption{rollup.json File Structure}
+  \label{fig:rollup-json}
+\end{figure}
+
+% --- pred.csv ---
+\paragraph{pred.csv}
+Summarises the IP addresses active during that period, their recommended security
+action level (Low, Medium, High, or Critical), and aggregate request counts per IP
+and cluster. Table~\ref{tab:pred-csv} shows an example record.
+
+\begin{table}[H]
+  \centering
+  \caption{Example Record from pred.csv}
+  \label{tab:pred-csv}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Field} & \textbf{Value} \\
+    \midrule
+    Client IP          & 193.142.147.209 \\
+    Window Start (UTC) & 2026-01-30 15:35:00 \\
+    Request Count      & 1 \\
+    Unique Paths       & 1 \\
+    Unique Methods     & 1 \\
+    Status 200         & 0 \\
+    Status 401         & 0 \\
+    Status 403         & 0 \\
+    Status 404         & 0 \\
+    Status 429         & 0 \\
+    4xx Ratio          & 1.000 \\
+    Path               & / \\
+    Cluster            & 4 \\
+    Cluster Strength   & 0.999401 \\
+    User Agents        & Mozilla/5.0 (Windows NT 10.0; Win64; x64) \ldots \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\clearpage  % flush all pending floats before starting the next section
+\section{Job Scheduling and Monitoring}
+
+Initially, pipeline jobs were triggered using standard cron jobs executed directly
+from the instance terminal. While functional, this approach offered no visibility
+into run history, no alerting on failure, and no resource tracking. To improve
+monitoring and reliability, scheduling was migrated to
+Cronicle~\cite{cronicle} --- a web-based job scheduler and monitoring system.
+
+Cronicle provides a visual interface showing the status of each job run with clear
+indications of successful completions and failures. The platform sends notifications
+when jobs fail, enabling quicker troubleshooting and resolution if something goes
+wrong. It also tracks performance metrics per execution --- CPU usage, memory
+consumption, and wall-clock execution time --- which have been valuable in confirming
+the pipeline does not approach the VM's resource limits. Based on the metrics
+collected across hundreds of runs, it is far from doing so: each run averages 2
+seconds and consumes only 0.5\% of CPU.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{image99.png}
+  \caption{Cronicle Job Completion Dashboard Showing Resource Usage Per Pipeline Run}
+  \label{fig:cronicle-dash}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.57\textwidth]{image100.png}
+  \caption{GCP Instance Utilisation (GCP Observability Tab)}
+  \label{fig:gcp-util}
+\end{figure}
+
+Figure~\ref{fig:cronicle-dash} shows the Cronicle interface for a successful job
+completion. The job executed in 3 seconds, consuming 0\% of CPU and negligible
+memory. The success banner confirms the clustering pipeline completed without errors,
+and the blue CPU bar indicates that all processing on the instance during that window
+was the pipeline script itself, with minimal system overhead. This demonstrates the
+pipeline's efficiency: it is lightweight enough to run every 5 minutes without
+impacting any other processes on the VM.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image101.png}
+  \caption{Pipeline Job History in Cronicle}
+  \label{fig:cronicle-history}
+\end{figure}
+
+The completed-jobs tab highlights the reliability of the pipeline by listing all
+historical runs with timestamps, each separated by the expected 5-minute interval.
+Uniform success statuses across all runs confirm the deployment is stable and does
+not encounter errors during normal operation. This view also functions as an audit
+trail: analysts can verify the clustering model ran continuously during any given
+time period, providing far better forensic visibility than a raw cron log in a
+terminal.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{image102.png}
+  \caption{Cronicle Schedule --- Upcoming Executions}
+  \label{fig:cronicle-schedule}
+\end{figure}
+
+Figure~\ref{fig:cronicle-schedule} shows Cronicle's forward-looking schedule view.
+Each row represents a forthcoming execution, displaying the exact command being run
+(including the Python script path \texttt{/opt/honey/pipeline/run\_batch\_nginx.py}),
+the plugin type (shell script), and a countdown to the next trigger. The
+\textit{Category} column identifies these as general jobs while the \textit{Plugin}
+column confirms they are shell-script executions of the Python clustering pipeline.
+Cronicle manages the recurring schedule without drift or gaps, and the
+\textit{Edit Event} links allow individual runs to be adjusted or paused for
+maintenance without disrupting the rest of the queue.
+
+Overall, Cronicle gives the project a production-like feel with comprehensive
+functionality for maintenance, testing, error notifications, and telemetry. The
+platform transforms what would have been an invisible cron job into a fully
+observable, manageable system with real-time status monitoring, historical audit
+trails, and proactive failure alerting. The performance metrics collected over
+hundreds of successful runs provide confidence that the clustering pipeline is both
+reliable and efficient. The combination of automated execution with comprehensive
+monitoring demonstrates that the clustering-based threat detection system can
+function as a robust, enterprise-ready solution.
+
+\section{Agentic LLM Interpretability}
+
+\subsection{Overview}
+
+While the clustering model assigns traffic windows to behavioural clusters and scores
+confidence, a label like ``IoT / embedded device exploit scan'' with a confidence of
+0.023 provides little actionable guidance. The LLM layer does not replace the
+clustering output; it interprets and enriches it into something actionable.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{image103.png}
+  \caption{Agentic LLM Pipeline Architecture}
+  \label{fig:llm-arch}
+\end{figure}
+
+\subsection{Context Supplied to the Model}
+
+On each pipeline run the model receives:
+
+\begin{itemize}
+  \item The current rollup and prediction rows.
+  \item Cluster severity labels.
+  \item Active Cloudflare WAF rules (as an example context).
+\end{itemize}
+
+From this it produces a human-readable threat summary, specific WAF actions tied to
+each detected cluster, and a triage priority list ordered by severity. For every
+Medium, High, or Critical cluster it raises a structured Jira ticket containing the
+observed activity, matched patterns, recommended action, and supporting references.
+The model is explicitly instructed not to fabricate CVE URLs to prevent
+hallucinations.
+
+\subsection{RAG and Knowledgebase Integration}
+
+The MITRE D3FEND~\cite{d3fend} knowledgebase (thousands of entries) cannot be
+pasted wholesale into the prompt. Instead, each entry is pre-embedded offline using
+\texttt{sentence-transformers/all-MiniLM-L6-v2} via the HuggingFace Inference API
+and stored as normalised vectors. At query time, the model calls a
+\texttt{query\_knowledgebase} tool, and cosine-similarity retrieval injects the three
+most relevant entries into the prompt, keeping the context window lean while grounding
+recommendations in established frameworks.
+
+\subsection{Agentic Tool-Use Loop}
+
+The model operates as a tool-use loop, making sequential calls within a single run:
+
+\begin{enumerate}
+  \item Query the knowledgebase once per detected cluster.
+  \item Call \texttt{check\_existing\_jira\_tickets} to avoid duplicate tickets.
+  \item Create a new ticket or append an update to an existing one.
+\end{enumerate}
+
+Cluster 13 (known legitimate application traffic, labelled ``Legitimate application
+traffic'' with confidence 0.598) is suppressed from ticket creation
+unless anomalous signals appear.
+
+% ============================================================
+%  CHAPTER 6 — RESULTS  (placeholder)
+% ============================================================
+\chapter{Results and Discussion}
+
+\textit{(This chapter will present the consolidated findings from CDN testing
+(Chapter~\ref{sec:cf-ddos-summary}--\ref{sec:comparison}), traffic pattern analysis
+(Chapter~4), and the end-to-end agentic pipeline (Chapter~5), drawing conclusions
+against the research questions stated in Section~1.3.)}
+
+% ============================================================
+%  CHAPTER 7 — FUTURE WORK
+% ============================================================
+\chapter{Future Work}
+
+\section{Multi-CDN Testing}
+
+\begin{enumerate}
+  \item Deploy the honeypot behind AWS CloudFront/WAF and Google Cloud CDN.
+  \item Run all three CDNs concurrently against identical attack scenarios.
+  \item Compare block rates, false-positive rates, CAPTCHA frequency, and confirmed
+        breaches.
+\end{enumerate}
+
+\section{Reinforcement Learning for Attack Pattern Detection}
+
+\begin{itemize}
+  \item Train a reinforcement learning model on CloudWatch logs (request patterns,
+        timing, IPs, user agents, attack methods).
+  \item Let the model learn what genuine attacks look like versus normal traffic.
+  \item Have it flag new attack patterns and suggest firewall rule changes (e.g.\
+        ``the \texttt{/api/login} endpoint is under sustained attack — tighten rate
+        limits'').
+  \item The model continues learning as new attack types emerge.
+\end{itemize}
+
+% ============================================================
+%  BACK MATTER
+% ============================================================
+\backmatter
+
+% ============================================================
+%  BIBLIOGRAPHY  (manually keyed entries)
+% ============================================================
+\chapter*{References}
+\addcontentsline{toc}{chapter}{References}
+
+\begin{thebibliography}{99}
+
+\bibitem{serverless-honeypot}
+H. Varna, ``Building a Free Serverless Honeypot on AWS (Lambda + API Gateway),''
+\textit{Medium}. [Online]. Available:
+\url{https://hemavarnas.medium.com/build-a-free-serverless-honeypot-on-aws-lambda-api-gateway-e9b896d7fe54}
+
+\bibitem{cf-reverse-proxy}
+Cloudflare, ``What Is a Reverse Proxy?,'' \textit{Cloudflare Learning Center}.
+[Online]. Available: \url{https://www.cloudflare.com/en-gb/learning/cdn/glossary/reverse-proxy/}
+
+\bibitem{cf-how-works}
+Cloudflare, ``How Cloudflare Works,'' \textit{Cloudflare Developer Docs}.
+[Online]. Available: \url{https://developers.cloudflare.com/fundamentals/concepts/how-cloudflare-works/}
+
+\bibitem{duckdns}
+DuckDNS, ``Free Dynamic DNS Hosted on AWS,'' \textit{DuckDNS}. [Online]. Available:
+\url{https://www.duckdns.org}
+
+\bibitem{lovable}
+Lovable AI, ``Build Something With Lovable,'' \textit{Lovable}. [Online]. Available:
+\url{https://lovable.dev}
+
+\bibitem{awesome-honeypots}
+paralax, ``Awesome Honeypots,'' \textit{GitHub}. [Online]. Available:
+\url{https://github.com/paralax/awesome-honeypots}
+
+\bibitem{aws-lambda}
+Amazon Web Services, ``AWS Lambda: Deploying Lambda Functions as .zip File Archives,''
+\textit{AWS Documentation}. [Online]. Available:
+\url{https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-zip.html}
+
+\bibitem{nginx-docs}
+NGINX, ``NGINX Documentation,'' \textit{NGINX}. [Online]. Available:
+\url{https://nginx.org/en/}
+
+\bibitem{nginx-ec2}
+NGINX, ``Create Amazon EC2 Instances for NGINX,'' \textit{NGINX Deployment Guides}.
+[Online]. Available:
+\url{https://docs.nginx.com/nginx/deployment-guides/amazon-web-services/ec2-instances-for-nginx/}
+
+\bibitem{whatismyip}
+WhatIsMyIPAddress, \textit{WhatIsMyIPAddress.com}. [Online]. Available:
+\url{https://whatismyipaddress.com}
+
+\bibitem{chatgpt}
+OpenAI, ``ChatGPT,'' \textit{OpenAI}. [Online]. Available: \url{https://chatgpt.com/}
+
+\bibitem{eraser}
+Eraser, ``AWS Diagram Generator,'' \textit{Eraser.io}. [Online]. Available:
+\url{https://www.eraser.io/ai/aws-diagram-generator}
+
+\bibitem{cloudflare-wp}
+ResearchGate, ``Enhancing Website Speed and Security With Cloudflare CDN,''
+\textit{ResearchGate}, 2024. [Online]. Available:
+\url{https://www.researchgate.net/publication/384807865}
+
+\bibitem{eos-ids}
+ACM Digital Library, ``An Efficient Optimal Security System for Intrusion Detection
+in Cloud Computing Environments Using Hybrid Deep Learning,''
+\textit{Advances in Engineering Software}, 2022. [Online]. Available:
+\url{https://dl.acm.org/doi/abs/10.1016/j.advengsoft.2022.103236}
+
+\bibitem{rana2024}
+K. Rana, ``Intrusion Detection in Cloud Environments Using Hybrid Deep Learning,''
+National College of Ireland, 2024. [Online]. Available:
+\url{https://norma.ncirl.ie/7728/1/kunalrana.pdf}
+
+\bibitem{fortinet-brute-force}
+Fortinet, ``What Is a Brute Force Attack?,'' \textit{Fortinet Cyber Glossary}.
+[Online]. Available:
+\url{https://www.fortinet.com/resources/cyberglossary/brute-force-attack}
+
+\bibitem{faker}
+joke2k, ``Faker Python Package,'' \textit{Faker Documentation}. [Online]. Available:
+\url{https://faker.readthedocs.io/en/master/}
+
+\bibitem{locust}
+Locust Contributors, ``Locust: An Open Source Load Testing Tool,'' \textit{GitHub}.
+[Online]. Available: \url{https://github.com/locustio/locust}
+
+\bibitem{cf-rate-limiting}
+Cloudflare, ``What Is Rate Limiting?,'' \textit{Cloudflare Learning Center}.
+[Online]. Available:
+\url{https://www.cloudflare.com/en-gb/learning/bots/what-is-rate-limiting/}
+
+\bibitem{siteguarding}
+SiteGuarding, ``How Hackers Find and Target Vulnerable Websites,''
+\textit{SiteGuarding Security Blog}. [Online]. Available:
+\url{https://www.siteguarding.com/security-blog/how-hackers-find-and-target-vulnerable-websites-the-complete-technical-breakdown/}
+
+\bibitem{cf-community-blocking}
+Cloudflare Community, ``Auto IP Blocking System,'' \textit{Cloudflare Community
+Forum}. [Online]. Available:
+\url{https://community.cloudflare.com/t/auto-ip-blocking-system/599358}
+
+\bibitem{xvpn}
+X-VPN, ``X-VPN Documentation,'' \textit{X-VPN}. [Online]. Available:
+\url{https://xvpn.io}
+
+\bibitem{mdn-http-status}
+Mozilla Developer Network, ``HTTP Response Status Codes,'' \textit{MDN Web Docs}.
+[Online]. Available:
+\url{https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status}
+
+\bibitem{burpsuite}
+PortSwigger, ``Configuring Burp Intruder Attacks,'' \textit{PortSwigger Web
+Security}. [Online]. Available:
+\url{https://portswigger.net/burp/documentation/desktop/tools/intruder/configure-attack}
+
+\bibitem{ffuf}
+ffuf Contributors, ``ffuf: A Fast Web Fuzzer Written in Go,'' \textit{GitHub}.
+[Online]. Available: \url{https://github.com/ffuf/ffuf}
+
+\bibitem{cf-bot-fight}
+Cloudflare, ``Get Started with Bot Fight Mode,'' \textit{Cloudflare Bot Management
+Documentation}. [Online]. Available:
+\url{https://developers.cloudflare.com/bots/get-started/bot-fight-mode/}
+
+\bibitem{cf-verified-bots}
+Cloudflare, ``Verified Bots,'' \textit{Cloudflare Radar}. [Online]. Available:
+\url{https://radar.cloudflare.com/bots\#verified-bots}
+
+\bibitem{cf-captcha-end}
+Cloudflare, ``The End of the Road for Cloudflare CAPTCHAs,'' \textit{Cloudflare
+Blog}. [Online]. Available:
+\url{https://blog.cloudflare.com/end-cloudflare-captcha/}
+
+\bibitem{ml-clustering-sec}
+Uptycs, ``Clustering for Threat Detection,'' \textit{Uptycs Blog}. [Online].
+Available:
+\url{https://www.uptycs.com/blog/threat-research-report-team/machine-learning-in-cybersecurity}
+
+\bibitem{sklearn-kmeans}
+scikit-learn, ``sklearn.cluster.KMeans,'' \textit{scikit-learn Documentation}.
+[Online]. Available:
+\url{https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html}
+
+\bibitem{sklearn-hdbscan}
+scikit-learn, ``sklearn.cluster.HDBSCAN,'' \textit{scikit-learn Documentation}.
+[Online]. Available:
+\url{https://scikit-learn.org/stable/modules/generated/sklearn.cluster.HDBSCAN.html}
+
+\bibitem{sklearn-scaler}
+scikit-learn, ``sklearn.preprocessing.StandardScaler,'' \textit{scikit-learn
+Documentation}. [Online]. Available:
+\url{https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html}
+
+\bibitem{hdbscan-params}
+HDBSCAN Contributors, ``Parameter Selection for HDBSCAN*,'' \textit{HDBSCAN
+Documentation}. [Online]. Available:
+\url{https://hdbscan.readthedocs.io/en/latest/parameter_selection.html}
+
+\bibitem{exploit-db}
+Exploit Database, ``Exploit 50702,'' \textit{Exploit-DB}. [Online]. Available:
+\url{https://www.exploit-db.com/exploits/50702}
+
+\bibitem{qwen3}
+Hugging Face, ``Qwen3-235B-A22B,'' \textit{Hugging Face Model Hub}. [Online].
+Available: \url{https://huggingface.co/Qwen/Qwen3-235B-A22B}
+
+\bibitem{hf-inference}
+Hugging Face, ``Inference Providers,'' \textit{Hugging Face Documentation}.
+[Online]. Available: \url{https://huggingface.co/docs/inference-providers/en/index}
+
+\bibitem{cf-api-lockdown}
+Cloudflare, ``Cloudflare API: Firewall Lockdowns,'' \textit{Cloudflare API
+Documentation}. [Online]. Available:
+\url{https://developers.cloudflare.com/api/resources/firewall/subresources/lockdowns/models/lockdown_url/}
+
+\bibitem{jira-api}
+Atlassian, ``JIRA REST API Examples,'' \textit{Atlassian Developer Documentation}.
+[Online]. Available:
+\url{https://developer.atlassian.com/server/jira/platform/jira-rest-api-examples/}
+
+\bibitem{zero-day}
+Wikipedia, ``Zero-Day Vulnerability,'' \textit{Wikipedia}. [Online]. Available:
+\url{https://en.wikipedia.org/wiki/Zero-day_vulnerability}
+
+\bibitem{wp-king-addons}
+The Hacker News, ``WordPress King Addons Flaw Under Active Attack,''
+\textit{The Hacker News}, Dec. 2025. [Online]. Available:
+\url{https://thehackernews.com/2025/12/wordpress-king-addons-flaw-under-active.html}
+
+\bibitem{owasp-api8}
+OWASP, ``API Security Top 10 API8:2023 Security Misconfiguration,''
+\textit{OWASP API Security Project}, 2023. [Online]. Available:
+\url{https://owasp.org/API-Security/editions/2023/en/0xa8-security-misconfiguration/}
+
+\bibitem{github-sensitive-data}
+GitHub, ``Removing Sensitive Data from a Repository,'' \textit{GitHub Security
+Documentation}. [Online]. Available:
+\url{https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository}
+
+\bibitem{nist-800-53}
+NIST, ``Security and Privacy Controls for Information Systems and Organizations,''
+\textit{NIST SP 800-53 Rev.\ 5}, 2020. [Online]. Available:
+\url{https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final}
+
+\bibitem{mitre-recon}
+MITRE, ``Reconnaissance (TA0043),'' \textit{MITRE ATT\&CK Framework}. [Online].
+Available: \url{https://attack.mitre.org/tactics/TA0043/}
+
+\bibitem{owasp-waf}
+OWASP, ``Web Application Firewall,'' \textit{OWASP Community Controls}. [Online].
+Available: \url{https://owasp.org/www-community/controls/Web_Application_Firewall}
+
+\bibitem{concept-drift}
+INESC TEC, ``Concept Drift Detection with Clustering via Statistical Change Detection
+Methods,'' \textit{INESC TEC Repository}. [Online]. Available:
+\url{https://repositorio.inesctec.pt/server/api/core/bitstreams/234d4fc6-af80-4fc2-9d65-2aaddb39508d/content}
+
+\bibitem{cronicle}
+J. Huckaby, ``Cronicle: A Multi-Server Task Scheduler,'' \textit{Cronicle}.
+[Online]. Available: \url{https://cronicle.net}
+
+\bibitem{azure-frontdoor}
+Microsoft, ``Azure Front Door and CDN Documentation,'' \textit{Microsoft Azure
+Documentation}. [Online]. Available:
+\url{https://learn.microsoft.com/en-us/azure/frontdoor/}
+
+\bibitem{kali-goldeneye}
+Kali Linux, ``GoldenEye,'' \textit{Kali Linux Tools}. [Online]. Available:
+\url{https://www.kali.org/tools/goldeneye/}
+
+\bibitem{kali-hping3}
+Kali Linux, ``hping3,'' \textit{Kali Linux Tools}. [Online]. Available:
+\url{https://www.kali.org/tools/hping3/}
+
+\bibitem{tcp-handshake}
+O. Sydneyma, ``Understanding the TCP Three-Way Handshake,'' \textit{Medium}.
+[Online]. Available:
+\url{https://medium.com/@oumasydney2000/understanding-the-tcp-three-way-handshake-a-fundamental-pillar-of-internet-communication-53c9230724c2}
+
+\bibitem{cf-syn-flood}
+Cloudflare, ``SYN Flood DDoS Attack,'' \textit{Cloudflare Learning Center}.
+[Online]. Available:
+\url{https://www.cloudflare.com/en-gb/learning/ddos/syn-flood-ddos-attack/}
+
+\bibitem{cf-ddos}
+Cloudflare, ``DDoS Protection,'' \textit{Cloudflare}. [Online]. Available:
+\url{https://www.cloudflare.com/en-gb/ddos/}
+
+\bibitem{gartner-cf}
+Gartner, ``Cloudflare DDoS Protection Reviews,'' \textit{Gartner Peer Insights}.
+[Online]. Available:
+\url{https://www.gartner.com/reviews/product/cloudflare-ddos-protection?marketSeoName=ddos-mitigation-solutions}
+
+\bibitem{cf-udp-flood}
+Cloudflare, ``UDP Flood DDoS Attack,'' \textit{Cloudflare Learning Center}.
+[Online]. Available:
+\url{https://www.cloudflare.com/en-gb/learning/ddos/udp-flood-ddos-attack/}
+
+\bibitem{udp-wiki}
+Wikipedia, ``UDP Flood Attack,'' \textit{Wikipedia}. [Online]. Available:
+\url{https://en.wikipedia.org/wiki/UDP_flood_attack}
+
+\bibitem{kali-slowhttp}
+Kali Linux, ``slowhttptest,'' \textit{Kali Linux Tools}. [Online]. Available:
+\url{https://www.kali.org/tools/slowhttptest/}
+
+\bibitem{nghttp2-h2load}
+nghttp2 Contributors, ``h2load — HTTP/2 Benchmarking Tool,'' \textit{nghttp2
+Documentation}. [Online]. Available:
+\url{https://nghttp2.org/documentation/h2load-howto.html}
+
+\bibitem{http2-ddos}
+L. Ming, Y.-B. Leau, and Y. Xie, ``Distributed Denial of Service Attack in HTTP/2:
+Review on Security Issues,'' \textit{IEEE Access}, 2024.
+doi: 10.1109/ACCESS.2024.3371013. [Online]. Available:
+\url{https://www.researchgate.net/publication/378542947}
+
+\bibitem{bunny-shield-docs}
+Bunny.net, ``Bunny Shield Documentation,'' \textit{Bunny.net Documentation}.
+[Online]. Available: \url{https://docs.bunny.net/shield}
+
+\bibitem{bunny-waf-docs}
+Bunny.net, ``Bunny WAF Documentation,'' \textit{Bunny.net Documentation}.
+[Online]. Available: \url{https://docs.bunny.net/shield/waf}
+
+\bibitem{dreamhost-bunny}
+DreamHost, ``Understanding the Bunny CDN Metrics Dashboard,'' \textit{DreamHost
+Help Center}. [Online]. Available:
+\url{https://help.dreamhost.com/hc/en-us/articles/35019587303572-Understanding-the-Bunny-CDN-metrics-dashboard}
+
+\bibitem{cdn-handbook-bunny}
+CDN Handbook, ``Bunny CDN,'' \textit{CDN Handbook}. [Online]. Available:
+\url{https://www.cdnhandbook.com/providers/bunnycdn/}
+
+\bibitem{european-tech-bunny}
+European-Tech, ``Bunny CDN,'' \textit{European-Tech}. [Online]. Available:
+\url{https://european-tech.com/service/bunny-cdn/}
+
+\bibitem{logicpin-bunny}
+LogicPin, ``BunnyCDN Review 2025,'' \textit{LogicPin}. [Online]. Available:
+\url{https://www.logicpin.com/technology/bunnycdn-review-2025-and-how-to-add-it-to-wordpress-developer-friendly-cdn/}
+
+\bibitem{azure-waf-rules}
+Microsoft, ``Web Application Firewall DRS and CRS Rule Groups and Rules,''
+\textit{Microsoft Azure Documentation}. [Online]. Available:
+\url{https://learn.microsoft.com/en-us/azure/web-application-firewall/ag/application-gateway-crs-rulegroups-rules}
+
+\bibitem{stallings2003dos}
+W. Stallings, ``Denial of Service Attacks,'' \textit{IEEE Security \& Privacy},
+vol.~1, no.~6, pp.~70--73, Nov.-Dec. 2003. doi: 10.1109/MSECP.2003.1253570.
+
+\bibitem{d3fend}
+MITRE Corporation, ``D3FEND™ --- A Knowledge Graph of Cybersecurity
+Countermeasures,'' \textit{MITRE D3FEND}, 2021. [Online]. Available:
+\url{https://d3fend.mitre.org}
+
+\bibitem{aws-gateway}
+Amazon Web Services, ``Amazon API Gateway,'' \textit{AWS Documentation}.
+[Online]. Available: \url{https://aws.amazon.com/api-gateway/}
+
+\bibitem{aws-cloudwatch}
+Amazon Web Services, ``Amazon CloudWatch,'' \textit{AWS Documentation}.
+[Online]. Available: \url{https://aws.amazon.com/cloudwatch/}
+
+\bibitem{aws-ec2}
+Amazon Web Services, ``Amazon EC2,'' \textit{AWS Documentation}.
+[Online]. Available: \url{https://aws.amazon.com/ec2/}
+
+\bibitem{aws-cloudfront}
+Amazon Web Services, ``Amazon CloudFront,'' \textit{AWS Documentation}.
+[Online]. Available: \url{https://aws.amazon.com/cloudfront/}
+
+\end{thebibliography}
+
+% ============================================================
+%  APPENDIX — LOG BOOK
+% ============================================================
+\appendix
+
+\chapter{Project Log Book}
+\label{app:logbook}
+
+\begin{longtable}{p{3cm} p{11cm}}
+  \toprule
+  \textbf{Date} & \textbf{Tasks Completed / Started} \\
+  \midrule
+  \endhead
+  07 Oct 2025  & Meet with supervisor. \\
+  08 Oct 2025  & Research CDNs, DDoS tools, and LOIC. \\
+  10 Oct 2025  & Set up event-driven architecture with Lambda, API Gateway, and CloudWatch. \\
+  12 Oct 2025  & Build Vue.js frontend for honeypot site. \\
+  14 Oct 2025  & Implement SQLite backend for user authentication; add hidden API Gateway link to frontend. \\
+  16 Oct 2025  & Spin up EC2 instance; configure security groups; clone Vue project. \\
+  20 Oct 2025  & Install Certbot and Nginx on EC2 instance after SSH. \\
+  25 Oct 2025  & Analyse initial server logs. \\
+  30 Oct 2025  & Set up Cloudflare CDN in front of website. \\
+  05 Nov 2025  & Tweak Cloudflare configurations; analyse log effects and attack frequency. \\
+  12 Nov 2025  & Start Project Definition Document. \\
+  20 Nov 2025  & Write Introduction and Motivation sections. \\
+  29 Dec 2025  & Add abbreviations / definitions page. \\
+  01 Jan 2026  & Write Research Methodology section. \\
+  02 Jan 2026  & Write Software Tools and Architecture sections. \\
+  03 Jan 2026  & Further describe honeypot architecture; write up Related Work section. \\
+  09 Jan 2026  & Migrate from EC2 to Google Cloud virtual instance. \\
+  10 Jan 2026  & Re-configure PM2 and Nginx on GCP VM. \\
+  12 Jan 2026  & Fix Cloudflare DNS propagation issue; add definitions to report. \\
+  13 Jan 2026  & Re-configure Cloudflare for GCP VM IP. \\
+  14 Jan 2026  & Complete Related Work write-up; write rate limit attack script. \\
+  15 Jan 2026  & Plan CDN resilience attack tests. \\
+  16 Jan 2026  & Run rate limiting tests with different configurations. \\
+  17 Jan 2026  & Write up rate limiting test results; continue experimentation. \\
+  21 Jan 2026  & Test Cloudflare geographic blocking custom rule. \\
+  22 Jan 2026  & Describe geographic blocking results; set up Burp Suite for bot challenge testing. \\
+  23 Jan 2026  & Meet supervisor to discuss progress. \\
+  24 Jan 2026  & K-Means clustering model training; research ML threat detection. \\
+  25 Jan 2026  & Switch to HDBSCAN; write up both clustering algorithms. \\
+  28 Jan 2026  & Automate model clustering; add cron job; research LLM interpretability. \\
+  01 Feb 2026  & Test LLM with rollup data; retrieve Cloudflare WAF rules via API for LLM context. \\
+  02 Feb 2026  & Set up Atlassian account for actionable Jira ticket generation. \\
+  04 Feb 2026  & Write up clustering model testing; set up Cronicle dashboard. \\
+  05 Feb 2026  & Write up Cronicle setup and usefulness. \\
+  06 Feb 2026  & Further research on Cloudflare security features. \\
+  07 Feb 2026  & Set up Amazon WAF. \\
+  08 Feb 2026  & GoldenEye DDoS attack (Kali Linux). \\
+  10 Feb 2026  & Write up DDoS results for Cloudflare. \\
+  11 Feb 2026  & DDoS attack using hping3. \\
+  12 Feb 2026  & Write up DDoS section; H2Load DDoS test (successful). \\
+  13 Feb 2026  & Continue writing DDoS section. \\
+  14 Feb 2026  & Complete SYN flood section; write UDP flood section. \\
+  18 Feb 2026  & Finish DDoS attacks write-up. \\
+  19 Feb 2026  & Set up BunnyCDN. \\
+  20 Feb 2026  & Enable Bunny Shield. \\
+  27 Feb 2026  & Rate limit test BunnyCDN; DDoS protection test. \\
+  01 Mar 2026  & Write up BunnyCDN test results. \\
+  02 Mar 2026  & Write up SQL injection results; begin structuring report. \\
+  04 Mar 2026  & Label all figures appropriately. \\
+  11 Mar 2026  & Organise report sections; switch LLM models. \\
+  12 Mar 2026  & Format report sections. \\
+  13 Mar 2026  & Finalise report; remove duplicate images. \\
+  \bottomrule
+\end{longtable}
+
+\end{document}
