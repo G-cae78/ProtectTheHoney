@@ -1731,65 +1731,77 @@ all flagged requests at the edge with no traffic forwarded to the origin.
 % ============================================================
 \section{Security Comparison: Cloudflare vs BunnyCDN}
 \label{sec:comparison}
-
+ 
 \begin{table}[H]
   \centering
   \caption{Cloudflare Free Tier vs Bunny.net Advanced Shield — Comparative Results}
   \label{tab:comparison}
-  \small
-  \begin{tabularx}{\textwidth}{llXXX}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\textwidth}{@{}l l X X X@{}}
     \toprule
     \textbf{Category} & \textbf{Attack} & \textbf{Cloudflare Free} & \textbf{Bunny Advanced} & \textbf{Key Observations} \\
     \midrule
+ 
     Rate Limiting & Credential Stuffing
-      & ✔ Triggers at 100 req/10 s; ✖ Max 10 s block; ✖ Indefinite cycling
-      & ✔ Triggers at 300 req/min; ✔ 30 s–1 h blocks; ✔ Hard cut-off
-      & Bunny provides longer blocks and harder shutdown behaviour. \\
+      & Triggers at 100 req/10\,s; max 10\,s block; indefinite cycling
+      & Triggers at 300 req/min; 30\,s–1\,h blocks; hard cut-off
+      & Bunny offers longer blocks and harder shutdown. \\
     \addlinespace
+ 
     L3 DDoS & ICMP Flood
-      & ✔ Edge mitigation; ✖ No dashboard events
-      & ✔ Edge mitigation; ✖ No detailed logs
-      & Both fully absorbed attack before origin impact. \\
+      & Edge mitigation; no dashboard events
+      & Edge mitigation; no detailed logs
+      & Both absorbed attack before origin impact. \\
     \addlinespace
+ 
     L4 DDoS & SYN Flood
-      & ✔ Edge mitigation; 17 KiB/s peak at origin; ✖ No events
-      & ✔ 100\% packet loss; ✔ Temporary IP block; ✔ Zero origin impact
-      & Bunny appeared more aggressive (temporary source blocking). \\
+      & Edge mitigation; 17\,KiB/s at origin; no events
+      & 100\% packet loss; temporary IP block; zero origin impact
+      & Bunny more aggressive (source-level blocking). \\
     \addlinespace
+ 
     L4 DDoS & UDP Flood
-      & ✔ Silent drop; ✔ 100\% loss; ✖ No events
-      & ✔ 100\% loss; ✔ Temporary source blocking
-      & Both strong at volumetric network-layer filtering. \\
+      & Silent drop; 100\% loss; no events
+      & 100\% loss; temporary source blocking
+      & Both strong at network-layer filtering. \\
     \addlinespace
+ 
     L7 DDoS & Slow HTTP
-      & ✔ Progressive mitigation; ✔ Defence trigger \textasciitilde64 s; ✖ No dashboard alert
-      & ✔ Edge timeout policy; ✔ 293 bot events logged
+      & Progressive mitigation; defence trigger \textasciitilde64\,s; no dashboard alert
+      & Edge timeout policy; 293 bot events logged
       & Cloudflare silent; Bunny classified as bot activity. \\
     \addlinespace
+ 
     L7 DDoS & HTTP/2 Flood
-      & ⚠ 31–60\% traffic reached origin; ✔ Email + dashboard alert
-      & ✔ Progressive to full block by run 4; ✔ IP-level ban
+      & 31–60\% traffic reached origin; email + dashboard alert
+      & Progressive to full block by run 4; IP-level ban
       & Bunny escalated to complete block; Cloudflare inconsistent. \\
     \addlinespace
+ 
     Bot Detection & Scripted Requests
-      & ⚠ Many passed without challenge
-      & ✔ Immediate fingerprint detection; ✔ Managed challenge
+      & Many passed without challenge
+      & Immediate fingerprint detection; managed challenge
       & Bunny Shield more aggressive. \\
     \addlinespace
-    WAF & SQL Injection (SQLMap / Ghauri)
-      & ✖ Zero WAF events across all 4 tests; ✖ No payload detection; ✖ \texttt{--random-agent} bypassed all heuristics (59.95k unmitigated requests)
-      & ✔ Rule 913100 fired on SQLMap UA; ✔ Rule 942230 fired on payloads; ✔ libjection normalised tamper obfuscation; ✔ All 4 tests logged and blocked
-      & Cloudflare free tier generated no SQLi events; Bunny Advanced Shield caught every test scenario. \\
+ 
+    WAF & SQL Injection
+      & Zero WAF events across all 4 tests; no payload detection; \texttt{--random-agent} bypassed all heuristics (59.95k unmitigated)
+      & Rule 913100 (scanner UA); Rule 942230 (payloads); libjection normalised tamper obfuscation; all 4 tests logged
+      & Cloudflare free tier generated no SQLi events; Bunny caught every test. \\
     \addlinespace
+ 
     Geo Blocking & Country Block
-      & ✔ Edge-level 403; ✔ Never reached origin; ✖ VPN bypass trivial
+      & Edge-level 403; never reached origin; VPN bypass trivial
       & Not tested
-      & IP-based filtering is effective but easily bypassed. \\
+      & IP-based filtering effective but easily bypassed. \\
     \addlinespace
+ 
     Telemetry & ---
-      & ✖ Limited logging; ✖ Silent mitigation; ✔ Email for HTTP DDoS only
-      & ✔ Granular WAF logs; ✔ Clear rule violation logging
+      & Limited logging; silent mitigation; email for HTTP DDoS only
+      & Granular WAF logs; clear rule violation logging
       & Bunny Advanced provides stronger forensic visibility. \\
+ 
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -1914,17 +1926,6 @@ behavioural patterns.
   \caption{3-D UMAP Projection of Trained HDBSCAN Model}
   \label{fig:umap-3d}
 \end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.7\textwidth]{image95.png}
-  \caption{Endpoint Frequency Heatmap Per Cluster}
-  \label{fig:endpoint-heatmap}
-\end{figure}
-
-The endpoint frequency heatmap (Figure~\ref{fig:endpoint-heatmap}) reveals that each
-cluster exhibits a distinct endpoint signature, demonstrating strong behavioural
-coherence.
 
 \subsection{Cluster Labels and Analysis}
 \label{sec:cluster-analysis}
