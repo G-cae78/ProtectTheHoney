@@ -136,6 +136,6 @@ scp "Machine Learning/Trained-model Artifacts/"*.joblib \
 | Attack simulation | Locust, curl-cffi, Kali Linux(SQLMap, Hping3, h2load) |
 
 ## Current Result
-<img width="2274" height="528" alt="image" src="https://github.com/user-attachments/assets/9b3fd0ab-b0b1-4811-9805-2e65012587cc" />
+<img width="1252" height="530" alt="image" src="https://github.com/user-attachments/assets/a74635ff-4c2a-47a0-9344-55275ab02da3" />
 
 ![alt text](image-1.png)
