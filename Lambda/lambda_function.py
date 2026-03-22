@@ -22,7 +22,7 @@ def safe_decode_body(event):
         try:
             body = base64.b64decode(body).decode("utf-8", errors="ignore")
         except Exception as e:
-            print("⚠️ base64 decode failed:", e)
+            print("base64 decode failed:", e)
             # leave body as-is
 
     return body
