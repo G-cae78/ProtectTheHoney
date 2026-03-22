@@ -80,17 +80,23 @@ The model was trained on real nginx access logs from the honeypot. Each IP's req
 - What's the ratio of 404s, 403s, 401s, 429s, 500s?
 - What paths did they request? (TF-IDF encoded)
 
-HDBSCAN clusters these windows. The resulting 14 clusters each map to a recognisable attack pattern:
+HDBSCAN clusters these windows. The retrained model produces 22 clusters, each mapping to a recognisable attack pattern:
 
-| Cluster | What it is |
-|---------|------------|
-| 0, 3 | `.env` file harvesting (secrets discovery) |
-| 1, 8, 9, 12, 13 | WordPress exploitation / admin enumeration |
-| 2 | IoT device default login scanning |
-| 4, 5, 6, 10 | Generic login / credential stuffing |
-| 7 | Swagger / OpenAPI docs enumeration |
-| 11 | PHPUnit RCE probing (`eval-stdin.php`) |
-| -1 | Noise (doesn't fit any known pattern) |
+| Cluster | Attack pattern | Severity |
+|---------|---------------|----------|
+| 0 | Path traversal / directory escape (`../`, `/etc/passwd`, `cgi-bin/bin/sh`) | Critical |
+| 7, 8, 10, 12 | PHP webshell deployment / backdoor probing (`.php`, `adminfuns.php`, `ws.php`) | Critical |
+| 1 | Git / source code exposure scan (`.git/config`, `.git/HEAD`) | High |
+| 9, 11 | Exchange / Autodiscover / RDP probe (`autodiscover/`, `RDWeb/`, `ReportServer`) | High |
+| 14, 16, 17 | IoT / embedded device exploit scan (`HNAP0`, `goform/`, `GponForm/`, `setup.cgi`) | High |
+| 18, 20 | Secrets discovery — `.env` file harvesting | High |
+| 21 | WordPress exploitation / admin enumeration (`/wp-admin`, `/wp-login.php`) | High |
+| 2 | Generic login discovery / credential targeting (`/login`, `login.jsp`, `login.aspx`) | Medium |
+| 3, 4, 5 | Favicon / robots.txt fingerprinting (`/favicon.ico`, `/robots.txt`) | Low |
+| 6, 15 | Uncategorised / miscellaneous scanning | Low |
+| 13 | Legitimate application traffic (assets, JS/CSS) | Info |
+| 19 | Secrets discovery + VPN/firewall probe (SonicWall, Cisco SSLVPN) | Info |
+| -1 | Noise — novel or one-off attack patterns | — |
 
 At inference time, new windows are assigned to the nearest cluster using a cosine nearest-neighbour index. Windows that are too far from everything get labelled as noise (-1), which typically means a novel or one-off attack.
 
