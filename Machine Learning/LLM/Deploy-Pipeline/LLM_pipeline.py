@@ -47,6 +47,11 @@ CF_HEADERS   = {
 MAX_EXPRESSION_LENGTH = 4096
 RULE_BUDGET           = 5
 
+''' 
+List of LLM models to try for inference, in order of preference. 
+The pipeline will attempt to use the first model and fall back to the next if there are issues (e.g., rate limits, errors). 
+This allows for flexibility in case certain models are unavailable or encounter problems during processing.'
+'''
 MODELS = [
     "qwen/qwen3-32b",
     "moonshotai/kimi-k2-instruct",
@@ -83,11 +88,12 @@ def load_kb():
     kb_vectors = cache["vectors"]
     print(f"✓ KB loaded: {len(kb_entries)} entries")
 
+# ── FastAPI app and routes ─────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # startup
-    load_kb()
-    sync_deployed_patterns()
+    load_kb() # load KB embeddings into memory on startup
+    sync_deployed_patterns() # sync deployed patterns with Cloudflare on startup
     print("✓ Pipeline ready")
     yield
 
@@ -95,8 +101,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Honey In The Cloud LLM Pipeline", lifespan=lifespan)
 
 class RollupPayload(BaseModel):
-    rollup:      dict
-    predictions: list[dict] | None = None
+    rollup:      dict # the rollup JSON containing cluster info and metadata
+    predictions: list[dict] | None = None # optional list of prediction dicts (e.g., from pred.csv) to provide additional context for the LLM
 
 def verify_secret(x_pipeline_secret: str = Header(...)):
     if x_pipeline_secret != PIPELINE_SECRET:
@@ -104,7 +110,7 @@ def verify_secret(x_pipeline_secret: str = Header(...)):
 
 # ── Routes ────────────────────────────────────────────────────
 @app.get("/health")
-def health():
+def health(): # simple health check endpoint to verify the service is running
     return {
         "status":            "ok",
         "kb_entries":        len(kb_entries),
@@ -114,32 +120,32 @@ def health():
     }
 
 @app.post("/pipeline/rollup", dependencies=[Depends(verify_secret)])
-async def process_rollup(payload: RollupPayload):
+async def process_rollup(payload: RollupPayload): # main endpoint to process a single rollup with optional predictions, determine actionable clusters, and run the pipeline
     maybe_reset_session()
 
-    rollup   = payload.rollup
-    clusters = rollup.get("clusters", [])
+    rollup   = payload.rollup # the rollup JSON containing cluster info and metadata
+    clusters = rollup.get("clusters", []) # list of clusters from the rollup, each containing details like cluster ID, label, severity, patterns, etc.
 
-    actionable_severities = {"CRITICAL", "HIGH", "MEDIUM"}
-    actionable = []
+    actionable_severities = {"CRITICAL", "HIGH", "MEDIUM"} # define which severity levels are considered actionable for further processing (e.g., creating tickets, deploying rules)
+    actionable = [] # list to hold clusters that are deemed actionable based on their severity and whether they've been handled before
     for c in clusters:
         severity = _get_cluster_severity(c["cluster"])
-        print(f"  Cluster {c['cluster']} severity: {severity}")
-        if severity in actionable_severities and c["cluster"] not in handled_clusters:
+        print(f"  Cluster {c['cluster']} severity: {severity}") # log the severity of each cluster for visibility
+        if severity in actionable_severities and c["cluster"] not in handled_clusters: # check if the cluster's severity is actionable and if it hasn't been handled in this session
             actionable.append(c)
 
     print(f"  Actionable clusters: {[c['cluster'] for c in actionable]}")
     print(f"  Handled clusters:    {handled_clusters}")
 
-    if not actionable:
+    if not actionable: # if there are no actionable clusters, skip processing and return a response indicating that the rollup was skipped due to no new actionable clusters
         return {
             "status":   "skipped",
             "reason":   "no new actionable clusters",
             "clusters": [c["cluster"] for c in clusters],
             }
 
-    current_WAF_rules = _fetch_current_waf_rules()
-    sync_deployed_patterns()
+    current_WAF_rules = _fetch_current_waf_rules() # fetch the current WAF rules from Cloudflare to provide context for the pipeline and ensure that any new rules deployed do not conflict with existing ones
+    sync_deployed_patterns() # sync the in-memory record of deployed patterns with Cloudflare to ensure the pipeline has an up-to-date view of what patterns have already been deployed as rules
 
     result = await run_pipeline(
         rollup=rollup, 
@@ -681,22 +687,22 @@ def maybe_reset_session():
         sync_deployed_patterns()
         print(f"✓ Session reset for {today}")
 
-def sync_deployed_patterns() -> None:
-    _, rules = _get_ruleset()
-    for action in deployed_patterns:
-        deployed_patterns[action].clear()
+def sync_deployed_patterns() -> None: # Sync the in-memory record of deployed patterns with Cloudflare to ensure the pipeline has an up-to-date view of what patterns have already been deployed as rules
+    _, rules = _get_ruleset() # Fetch the current ruleset to get the active rules and their patterns
+    for action in deployed_patterns: 
+        deployed_patterns[action].clear() # Clear existing patterns for this action to resync from Cloudflare
     for rule in rules:
-        if "[auto]" not in rule.get("description", "").lower():
+        if "[auto]" not in rule.get("description", "").lower(): # Only consider rules that were automatically deployed by this pipeline (identified by "[auto]" in the description) to avoid syncing manual rules
             continue
-        action     = rule.get("action")
-        expression = rule.get("expression", "")
+        action     = rule.get("action") # Get the action of the rule (e.g., block, challenge) to categorize the patterns accordingly
+        expression = rule.get("expression", "") # Get the expression of the rule, which contains the patterns that trigger the rule, to extract and track them in the in-memory record
         if action not in deployed_patterns:
-            continue
-        found = re.findall(r'contains "([^"]+)"', expression)
+            continue 
+        found = re.findall(r'contains "([^"]+)"', expression) # Extract patterns from the expression using a regex that looks for 'contains "pattern"' to identify the specific patterns that have been deployed as rules
         deployed_patterns[action].update(found)
     print(f"✓ Deployed patterns synced: { {k: len(v) for k, v in deployed_patterns.items()} }")
 
-CLUSTER_SEVERITY = {
+CLUSTER_SEVERITY = { # Mapping of cluster IDs to severity labels, used to determine which clusters are actionable for further processing in the pipeline (e.g., creating tickets, deploying rules). This mapping is based on historical data and can be updated as needed.
     -1: "CRITICAL",  0: "CRITICAL",  1: "HIGH",     2: "MEDIUM",
      3: "LOW",        4: "LOW",        5: "LOW",      6: "LOW",
      7: "CRITICAL",   8: "CRITICAL",  9: "HIGH",    10: "CRITICAL",
@@ -705,11 +711,16 @@ CLUSTER_SEVERITY = {
     19: "HIGH",      20: "HIGH",     21: "HIGH",
 }
 
-def _get_cluster_severity(cluster_id: int) -> str:
-    severity = CLUSTER_SEVERITY.get(cluster_id, "UNKNOWN")
+def _get_cluster_severity(cluster_id: int) -> str: # Helper function to get the severity label for a given cluster ID based on the predefined mapping in CLUSTER_SEVERITY. If the cluster ID is not found in the mapping, it defaults to "UNKNOWN".
+    severity = CLUSTER_SEVERITY.get(cluster_id, "UNKNOWN") 
     return severity
 
-def get_completion(messages, tools, tool_choice, models=MODELS):
+def get_completion(messages, tools, tool_choice, models=MODELS): 
+    '''
+    Attempt to get a completion from the list of models in order, handling specific API errors to determine if a model is unavailable
+    or lacks tool support, or if the tool use failed due to bad generation. If a model encounters an error that suggests it's unavailable or doesn't support the required features,
+    the function will catch that error, log a warning, and continue to the next model in the list. If all models are exhausted without a successful completion, it raises a RuntimeError.
+     ''' 
     for model in models:
         try:
             response = groq_client.chat.completions.create(
@@ -737,6 +748,12 @@ def get_completion(messages, tools, tool_choice, models=MODELS):
     raise RuntimeError("All models exhausted")
 
 def dispatch_tool(call):
+    '''
+    Dispatches a tool call based on the function name specified in the call. 
+    It parses the arguments from the call, determines which tool function to execute based on the function name, 
+    and returns the result of that function. If the function name does not match any known tools,
+    it returns an error message indicating that the tool is unknown.
+    '''
     args = json.loads(call.function.arguments)
     if call.function.name == "query_knowledgebase":
         return query_knowledgebase(**args)

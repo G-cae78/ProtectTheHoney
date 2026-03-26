@@ -10,6 +10,7 @@ def send_batch(rollup_pred_pairs: list[tuple[dict, str]]):
     cols  = ["client_ip", "cluster", "uas", "path_text",
              "request_count", "ratio_4xx", "cluster_strength"]
 
+    '''For each rollup and corresponding prediction CSV, filter the predictions to include only those clusters present in the rollup,'''
     for rollup, pred_csv_path in rollup_pred_pairs:
         cluster_ids = [c["cluster"] for c in rollup["clusters"]]
         df          = pd.read_csv(pred_csv_path)
@@ -21,6 +22,7 @@ def send_batch(rollup_pred_pairs: list[tuple[dict, str]]):
             "predictions": predictions,
         })
 
+    '''Sends a batch of rollup and prediction data to the LLM pipeline endpoint for further processing.'''
     r = requests.post(
         "http://localhost:8000/pipeline/rollup/batch",
         json={"items": items},
@@ -32,7 +34,7 @@ def send_batch(rollup_pred_pairs: list[tuple[dict, str]]):
     )
     return r.json()
 
-# Usage
+'''Example usage: prepare rollup and prediction data, then send to the LLM pipeline endpoint.'''
 result = send_batch([
     (rollup_payload_1_dict, "pred_20260319T135002Z.csv"),
     (rollup_payload_2_dict, "pred_20260319T140002Z.csv"),
