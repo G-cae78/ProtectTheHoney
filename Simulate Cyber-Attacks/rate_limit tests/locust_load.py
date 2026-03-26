@@ -9,9 +9,9 @@ fake = Faker()
 time = time()
 # Resolve Locust worker public IP once
 PUBLIC_IP = None
-ip_lock = threading.Lock()
+ip_lock = threading.Lock() # Lock to synchronize access to PUBLIC_IP across threads
     
-def get_public_ip():
+def get_public_ip(): # Function to retrieve the public IP address of the machine running the Locust tests, with caching to avoid redundant API calls.
     global PUBLIC_IP
     with ip_lock:
         if PUBLIC_IP is None:
@@ -21,7 +21,7 @@ def get_public_ip():
                 PUBLIC_IP = "unknown"
         return PUBLIC_IP
     
-class RateLimitUser(HttpUser):
+class RateLimitUser(HttpUser): # Locust user class that simulates login attempts to test rate limiting on the target API.
     wait_time = between(0.01, 0.05)  # aggressive but reasonable
     host = "https://hdtvstreams.com"
 
@@ -31,12 +31,15 @@ class RateLimitUser(HttpUser):
         self.public_ip = get_public_ip()
 
     @task
-    def login_attempt(self):
+    def login_attempt(self): # Task that sends POST requests to the login endpoint, checking for rate limiting (HTTP 429) and edge blocking (HTTP 403), while counting requests and printing status codes for monitoring.
+
+        # Generate random credentials for each login attempt to avoid triggering simple credential-based blocks, while focusing on testing rate limits and edge blocks based on request volume and patterns rather than specific user accounts.
         payload = {
             "email": fake.email(),
             "password": fake.password()
         }
 
+        # Send the POST request to the login endpoint and handle responses to detect rate limiting and edge blocking, while printing relevant information for monitoring and debugging.
         with self.client.post(
             "/api/auth/login",
             json=payload,
@@ -75,7 +78,7 @@ class RateLimitUser(HttpUser):
 
 
     @task
-    def load_assets(self):
+    def load_assets(self): # Additional task to load the homepage, which may trigger different rate limits or edge blocks based on overall traffic patterns, while monitoring responses for success or failure.
         with self.client.get(
             "/",
             catch_response=True,
@@ -86,7 +89,7 @@ class RateLimitUser(HttpUser):
             else:
                 response.failure(f"Failed to load homepage: {response.status_code}")
 
-class StepLoadShape(LoadTestShape):
+class StepLoadShape(LoadTestShape): # Custom load shape that gradually increases the number of users over time to find the rate-limit threshold, with configurable parameters for step duration, user increments, spawn rate, and maximum users.
     """
     Gradually increases load to find rate-limit threshold
     """
@@ -97,9 +100,9 @@ class StepLoadShape(LoadTestShape):
     max_users = 500
 
     def tick(self):
-        run_time = self.get_run_time()
+        run_time = self.get_run_time() # Get the total run time of the test in seconds
 
-        current_step = run_time // self.step_time
-        users = min((current_step + 1) * self.step_users, self.max_users)
+        current_step = run_time // self.step_time # Calculate the current step based on elapsed time and step duration
+        users = min((current_step + 1) * self.step_users, self.max_users) # Calculate the total number of users to simulate based on the current step, ensuring it does not exceed the maximum user limit
 
-        return (users, self.spawn_rate) 
+        return (users, self.spawn_rate) # Return the current user count and spawn rate for Locust to adjust the load accordingly
