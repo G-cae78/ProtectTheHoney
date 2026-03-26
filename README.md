@@ -42,8 +42,10 @@ ProtectTheHoney/
 │
 ├── Machine Learning/
 │   ├── HDBSCAN.ipynb               # Main model training notebook trains the clustering model on nginx logs
+│   ├── HDBSCAN_train-2.ipynb       # Retrained model notebook (22 clusters, data up to 2026-03-07)
 │   ├── Kmeans.ipynb                # Earlier K-means experiment (superseded by HDBSCAN)
 │   ├── drift_analysis.ipynb        # Measures how much attack patterns have shifted since training
+│   ├── honeypot_clusters_3d.html   # Interactive 3D UMAP visualisation of clusters
 │   ├── pipeline.py                 # Local version of the feature engineering pipeline
 │   │
 │   ├── GCP-VM-Pipeline /           # Code that runs on the GCP instance (note: folder has a trailing space)
@@ -59,12 +61,17 @@ ProtectTheHoney/
 │   │   └── labels_train.joblib     # Cluster label for each training window
 │   │
 │   └── LLM/
-│       └── llm-testing.ipynb       # Experiments with LLM-driven WAF rule generation via HuggingFace
+│       ├── llm-testing.ipynb       # Experiments with LLM-driven WAF rule generation via HuggingFace
+│       ├── knowledgebase.json      # Static knowledge base of attack patterns fed to the LLM
+│       └── Deploy-Pipeline/        # Production LLM pipeline
+│           ├── LLM_pipeline.py     # Core LLM inference logic (Groq multi-model)
+│           └── Feed_LLM_pipeline.py # Feeds rollup JSON from HDBSCAN inference into the LLM pipeline
 │
 ├── Simulate Cyber-Attacks/
 │   └── rate_limit tests/
 │       ├── locust_load.py          # Locust load test simulates up to 500 concurrent users in steps
-│       └── curl_cffi_script.py     # Mimics browser TLS fingerprints to bypass bot detection
+│       ├── curl_cffi_script.py     # Mimics browser TLS fingerprints to bypass bot detection
+│       └── rate_limit.py           # Direct rate limit probing script
 │
 └── README.md
 ```
@@ -138,7 +145,7 @@ scp "Machine Learning/Trained-model Artifacts/"*.joblib \
 | ML / clustering | Python, HDBSCAN, TF-IDF, scikit-learn, joblib |
 | Inference infra | GCP VM, cron, nginx |
 | WAF / CDN | Cloudflare (API-driven rule creation) & BunnyCDN(for testing) |
-| LLM | HuggingFace InferenceClient (`openai/gpt-oss-120b`) |
+| LLM | Groq InferenceClient (`qwen/qwen3-32b`, `moonshotai/kimi-k2-instruct`, `llama-3.1-8b-instant`, `openai/gpt-oss-20b`, `llama-3.3-70b-versatile`, `meta-llama/llama-4-scout-17b-16e-instruct`) |
 | Attack simulation | Locust, curl-cffi, Kali Linux(SQLMap, Hping3, h2load) |
 
 ## Current Result
