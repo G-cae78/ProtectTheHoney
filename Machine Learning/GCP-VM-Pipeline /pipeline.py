@@ -6,6 +6,7 @@ from hdbscan.prediction import approximate_predict
 REQ_RE = re.compile(r"^(?P<method>[A-Z]+)\s+(?P<path>\S+)\s+HTTP\/")
 
 def parse_request(req_line: str):
+    '''Parses an HTTP request line and returns the method and path with digits normalized.'''
     req_line = str(req_line)
     m = REQ_RE.search(req_line)
     if not m:
@@ -16,6 +17,7 @@ def parse_request(req_line: str):
     return method, path
 
 def load_csv_logs(csv_path: str) -> pd.DataFrame:
+    '''Loads CSV logs and extracts relevant fields, normalizing the client IP and timestamp.'''
     cols = [
         "Log Source and Client IP",
         "Identd identity",
@@ -42,6 +44,7 @@ def load_csv_logs(csv_path: str) -> pd.DataFrame:
     return df
 
 def make_5min_windows(df: pd.DataFrame) -> pd.DataFrame:
+    '''Aggregates log entries into 5-minute windows per client IP, computing various features for anomaly detection.'''
     df = df.copy()
     df["window_start"] = df["Timestamp"].dt.floor("5min")
 
@@ -82,11 +85,13 @@ def make_5min_windows(df: pd.DataFrame) -> pd.DataFrame:
     return agg
 
 def build_X(windows: pd.DataFrame, vectorizer, scaler, num_cols):
+    '''Builds a feature matrix for anomaly detection by combining TF-IDF vectorized path text with scaled numerical features.'''
     X_txt = vectorizer.transform(windows["path_text"].fillna(""))
     X_num = scaler.transform(windows[num_cols].fillna(0))
     return hstack([X_txt, csr_matrix(X_num)])
 
 def predict_windows(windows: pd.DataFrame, X, hdb):
+    '''Predicts anomaly clusters for each window using the HDBSCAN model and returns the results in a DataFrame.'''
     labels, strengths = approximate_predict(hdb, X)
     out = windows.copy()
     out["cluster"] = labels
@@ -100,6 +105,7 @@ NGINX_RE = re.compile(
 )
 
 def parse_nginx_lines(lines):
+    '''Parses Nginx log lines using a regex pattern and returns a DataFrame with extracted fields.'''
     rows = []
     for line in lines:
         line = line.strip()

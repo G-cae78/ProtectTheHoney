@@ -10,6 +10,7 @@ import pandas as pd
 
 from pipeline import parse_nginx_lines, make_5min_windows, build_X, predict_windows
 
+'''This script runs as a batch process on the GCP VM, periodically reading new Nginx log lines, processing them, and saving anomaly detection results. It maintains an offset to only read new lines since the last run.'''
 BASE = Path("/opt/honey")
 ART = BASE / "artifacts"
 STATE = BASE / "state"
@@ -24,6 +25,7 @@ ACCESS_LOG = Path("/var/log/nginx/access.log")
 OFFSET_FILE = STATE / "nginx_access.offset"
 
 def read_offset() -> int:
+    '''Reads the last read offset for the Nginx access log from a file, returning 0 if the file doesn't exist or is invalid.'''
     if OFFSET_FILE.exists():
         try:
             return int(OFFSET_FILE.read_text().strip())
@@ -32,9 +34,11 @@ def read_offset() -> int:
     return 0
 
 def write_offset(off: int):
+    '''Writes the current read offset for the Nginx access log to a file.'''
     OFFSET_FILE.write_text(str(off))
 
 def read_new_lines():
+    '''Reads new lines from the Nginx access log since the last offset, updating the offset file accordingly. Handles log rotation by resetting the offset if the file size has decreased.'''
     if not ACCESS_LOG.exists():
         raise FileNotFoundError(f"Missing {ACCESS_LOG}")
 
@@ -91,6 +95,11 @@ def main():
     assigned = labels_train[idx].copy()
     strength = 1.0 - dist  # higher = more similar
 
+    '''Note: HDBSCAN's approximate_predict doesn't have a built-in distance threshold for marking points as noise, 
+    so we apply a percentile-based threshold on the cosine distance to determine which points are too far from existing clusters and should be labeled as noise (-1). 
+    This allows us to maintain consistency with the notebook pipeline's approach of keeping the bottom 85% by distance and marking the top 15% as noise. 
+    The percentile threshold can be adjusted based on desired sensitivity.'''
+
     # PERCENTILE-BASED THRESHOLDING: mark top X% farthest points as noise (-1)
     # (same approach as notebook: keep bottom 85% by distance, mark top 15% as noise)
     PERCENTILE_THRESHOLD = 85
@@ -118,6 +127,9 @@ def main():
         cid = int(cluster_id)
     meta = cluster_map.get(str(cid), cluster_map.get("-1", {"label": "Unknown", "severity": "Investigate"}))
 
+    '''The rollup JSON aggregates information about each cluster, including the number of windows, average strength, top paths, and status code totals. 
+    It also includes a summary of the overall prediction results, such as total windows processed, number of noise windows, and average strength across all windows. 
+    This structured output can be used for further analysis '''
     roll.append({
         "cluster": cid,
         "cluster_label": meta.get("label", "Unknown"),
@@ -136,6 +148,7 @@ def main():
             }
         })
 
+    '''save roll up into a JSON file with a timestamped filename, including a summary of the overall results and details for each cluster.'''
     roll_path = RESULTS / f"rollup_{now}.json"
     total_windows = int(len(pred))
     noise_windows = int((pred["cluster"] == -1).sum())
