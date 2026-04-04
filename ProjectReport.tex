@@ -186,7 +186,7 @@ I extend my gratitude to Google Cloud, Amazon Web Services, Cloudflare and Bunny
 for providing accessible free and trial tiers that enabled independent security
 evaluation without enterprise licensing.
 
-Thank you to God for giving me the discipline, creativity, and fortitude to persevere
+Thank you to God for giving me the discipline and creativity to persevere
 through blockers and complete this project.
 
 % ---------- Table of Contents ----------
@@ -299,13 +299,8 @@ learning their strategies.
 
 \section{Introduction}
 
-Modern web applications face increasingly sophisticated threats: automated bots,
-web scrapers, credential-stuffing campaigns, and opportunistic actors constantly
-probing for exploitable weaknesses~\cite{siteguarding}. Cloud providers have 
-responded with integrated security offerings; Content Delivery Networks (CDNs) 
-with built-in filtering, Web Application Firewalls (WAFs), and bot-mitigation 
-services~\cite{cf-reverse-proxy}. Companies such as Cloudflare, Google Cloud, 
-and Amazon Web Services market these as comprehensive defensive layers, capable 
+Companies such as Cloudflare, Google Cloud, 
+and Amazon Web Services market comprehensive defensive layers such as , capable 
 of identifying and blocking malicious traffic before it reaches production 
 systems~\cite{cf-how-works,aws-cloudfront}.
 
@@ -381,8 +376,7 @@ state of cloud security:
   \item \textbf{How effective are CDN-provided security mechanisms at detecting and
     mitigating real-world malicious traffic when deployed on non-enterprise tiers?}
 
-  \item \textbf{How does the effectiveness of security features differ between
-    Cloudflare, AWS CloudFront/WAF, and Google Cloud CDN when exposed to identical
+  \item \textbf{How does the effectiveness of security features differ between CDN offerings in identical
     attack scenarios?}
 
   \item \textbf{To what extent do CAPTCHAs and JavaScript challenges reduce automated
@@ -390,9 +384,6 @@ state of cloud security:
 
   \item \textbf{Which categories of malicious traffic (e.g.\ brute force, API abuse,
     automated scanning) are most likely to bypass CDN security controls?}
-
-  \item \textbf{What is the rate of false positives (legitimate interactions blocked
-    or challenged), and how does this differ across CDN platforms and settings?}
 
 \end{enumerate}
 
@@ -405,6 +396,89 @@ assurances~\cite{gartner-cf}.
 % ---------- Related Work ----------
 \chapter{Related Work}
 \label{sec:related-work}
+
+\subsection{Honeypot-Driven Automated Firewall Updates in the Cloud 
+\cite{chin2025}}
+
+Chin et al.\cite{chin2025} propose a closed-loop defence framework that transforms 
+passive honeypot telemetry into real-time firewall policy updates 
+without human intervention. The system deploys Cowrie sensors on an 
+Azure Linux virtual machine to capture SSH-based attack behaviour, 
+forwarding telemetry into Azure Monitor and Microsoft Sentinel for 
+near-real-time classification against the MITRE ATT\&CK framework. 
+On detecting a threat, a Logic App workflow automatically retrieves 
+existing Network Security Group rules and appends the malicious IP, 
+achieving a mean time to block of 0.86 seconds. Over a seven-day 
+evaluation window the system processed 12,224 SSH connection attempts, 
+mapping attacker behaviour across credential access and lateral movement 
+tactics and demonstrating that honeypot intelligence can drive 
+actionable defensive responses at machine speed.
+
+Despite these strengths, the framework has several limitations that 
+motivate the design choices in this project. Classification relies on 
+static MITRE ATT\&CK rule matching rather than unsupervised pattern 
+discovery, meaning attack categories must be known in advance and novel 
+or unlabelled behaviours are not surfaced. The automated response is 
+limited to IP-level blocking via NSG rules; there is no mechanism for 
+generating structured incident tickets, grounding recommendations in a 
+threat-intelligence knowledgebase, or expressing nuanced response 
+actions such as challenge versus block based on severity. The system 
+also targets SSH traffic exclusively and does not address 
+application-layer HTTP threats, web scanning campaigns, or CDN-level 
+security controls. This project addresses each of these gaps: 
+unsupervised HDBSCAN clustering discovers attack patterns without prior 
+labelling, the agentic LLM layer grounds responses in the MITRE D3FEND 
+knowledgebase via RAG, and the pipeline operates over live HTTP 
+honeypot traffic fronted by commercial CDN infrastructure.
+
+\subsection{LLM-Driven TTP Extraction from Honeypot Data 
+\cite{hassanin2024}}
+
+Hassanin and Moustafa present a framework for accelerating the 
+extraction of attacker tactics, techniques, and procedures (TTPs) from 
+honeypot logs using large language models. The system deploys a 
+vulnerable honeypot to capture attacker commands, passes them through 
+GPT-4-Turbo to produce structured TTP(Tactics, Techniques, Procedures) descriptions, replaces variable 
+entities with generic tokens for consistency, and converts the 
+normalised output into embedding vectors using the 
+Salesforce/SFR-Embedding-Mistral model for efficient retrieval during 
+subsequent augmentation steps. Evaluated against real-world attack 
+sessions on critical infrastructure, the framework demonstrated a 
+notable reduction in response time for detecting malicious activity 
+compared to manual analysis, confirming that LLM-based interpretation 
+of honeypot data can produce actionable intelligence at a speed 
+impractical for human analysts alone.
+
+However, the approach has practical constraints that limit its 
+accessibility. TTP extraction requires an A100 GPU to run the embedding 
+model, incurring significant infrastructure cost and ruling out 
+deployment on free-tier or lightweight cloud instances. The pipeline 
+also stops at TTP classification: it surfaces attacker behaviour but 
+does not propagate derived intelligence back into defensive controls, 
+leaving the translation of findings into firewall rules or incident 
+tickets as a manual analyst task. This project builds on the same 
+principle of LLM-assisted honeypot interpretation but addresses both 
+limitations: embedding generation uses the lightweight 
+\texttt{voyage-3-lite} model running via API, reducing per-cycle token 
+usage by 70.4\% compared to full knowledgebase injection, and the 
+agentic tool-use loop closes the gap between interpretation and 
+response by autonomously deploying WAF rules and raising structured 
+Jira tickets without human intervention.
+
+
+\section{Hybrid Deep Learning for Cloud Intrusion Detection~\cite{eos-ids}}
+An Optimal Security System for intrusion detection in cloud computing environments
+(EOS-IDS) was proposed using a three-stage process: (1) data pre-processing via an
+Improved Heap Optimisation (IHO) algorithm; (2) feature selection via a Chaotic Red
+Deer Optimisation (CRDO) algorithm; and (3) detection and classification via a Deep
+Kronecker Neural Network (CKNN). The model successfully addressed common IDS
+limitations including over-fitting, low classification accuracy, and high false
+positive rates. Evaluation was conducted on benchmark datasets including NSL-KDD and
+UNSW-NB15, where the system achieved notably high detection accuracy across multiple
+attack categories such as DoS, probe, and R2L. Despite these results, the reliance
+on pre-labelled, static datasets means the model has no mechanism for discovering
+novel or unlabelled attack patterns, a limitation this project addresses through
+the use of unsupervised clustering on live honeypot data.
 
 \section{Cloudflare CDN Performance: A WordPress Case Study~\cite{cloudflare-wp}}
 \begin{figure}[H]
@@ -427,20 +501,6 @@ it establishes a useful empirical baseline for understanding how CDN interceptio
 behaves under real-world traffic, a foundation this project builds upon by
 evaluating Cloudflare's security controls against genuine malicious traffic rather
 than legitimate user requests.
-
-\section{Hybrid Deep Learning for Cloud Intrusion Detection~\cite{eos-ids}}
-An Optimal Security System for intrusion detection in cloud computing environments
-(EOS-IDS) was proposed using a three-stage process: (1) data pre-processing via an
-Improved Heap Optimisation (IHO) algorithm; (2) feature selection via a Chaotic Red
-Deer Optimisation (CRDO) algorithm; and (3) detection and classification via a Deep
-Kronecker Neural Network (CKNN). The model successfully addressed common IDS
-limitations including over-fitting, low classification accuracy, and high false
-positive rates. Evaluation was conducted on benchmark datasets including NSL-KDD and
-UNSW-NB15, where the system achieved notably high detection accuracy across multiple
-attack categories such as DoS, probe, and R2L. Despite these results, the reliance
-on pre-labelled, static datasets means the model has no mechanism for discovering
-novel or unlabelled attack patterns, a limitation this project addresses through
-the use of unsupervised clustering on live honeypot data.
 
 \section{Intrusion Detection Using Hybrid Deep Learning~\cite{rana2024}}
 This MSc research by Kunal Rana investigated ML and deep learning for intrusion
@@ -501,14 +561,26 @@ honeypot logs with no pre-labelled ground truth, enabling it to discover novel a
 clusters without prior knowledge of their existence.
 
 \textbf{Lack of closed-loop automated response.}
-None of the surveyed works close the loop between threat detection and remediation.
-Detection systems produce alerts or classifications, but the translation of those
-outputs into actionable firewall rules and structured incident records remains a
-manual analyst task. This project contributes an agentic LLM layer that autonomously
-interprets cluster outputs, deploys Cloudflare WAF rules via the Rulesets API, and
-raises structured Jira tickets, eliminating the analyst in the loop for routine
-threat categories while decribing reasoning behind actions and grounding recommendations in the MITRE D3FEND
-knowledgebase~\cite{d3fend} via RAG.
+Recent work has begun addressing this gap. Chin et al.~\cite{chin2025} demonstrate
+that honeypot telemetry can drive real-time firewall updates in a cloud environment,
+achieving a sub-second mean time to block against SSH-based threats using
+Azure-native Logic App workflows. Hassanin and Moustafa~\cite{hassanin2024} show
+that LLM-based TTP extraction from honeypot logs can surface actionable intelligence
+faster than manual analysis. However, neither work closes the full loop: Chin
+et al.\ rely on static MITRE ATT\&CK rule matching rather than unsupervised cluster
+discovery, meaning novel or unlabelled attack patterns are not surfaced, and their
+automated response is limited to IP-level blocking with no structured incident
+ticketing. Hassanin and Moustafa do not propagate extracted intelligence back into
+defensive controls at all, leaving firewall updates as a manual task. Both systems
+also require infrastructure inaccessible on free tiers Azure-native Logic Apps
+or A100 GPU capacity for embedding generation. This project addresses all three
+limitations: unsupervised HDBSCAN clustering discovers attack patterns without prior
+labelling, the agentic LLM layer autonomously deploys Cloudflare WAF rules via the
+Rulesets API and raises structured Jira tickets, and the full pipeline operates
+within free-tier constraints. Recommendations are grounded in the MITRE
+D3FEND knowledgebase~\cite{d3fend} via RAG, eliminating the analyst in the loop
+for routine threat categories while preserving human-readable reasoning behind
+every action taken.
 
 \textbf{No evaluation of concept drift in live security deployments.}
 The concept drift work~\cite{concept-drift} develops theoretical detection mechanisms
@@ -562,12 +634,11 @@ honeypot~\cite{cf-reverse-proxy}. This allows direct observation of how requests
 handled at the CDN layer: blocked outright, challenged, or forwarded to the backend 
 depending on the active configuration.
 
-Suspicious requests that reach the application are logged using a serverless pipeline
+The frontend contains hidden lambda links that could only be triggered by automated web scrapers and bots because they are invisible to a regular person. This was used to get an idea of the proportion ofmalicious or non-malicious interactions that occur through the frontend of an application. This lambda is 
 triggered via an API gateway~\cite{aws-gateway}. Metadata including request paths, 
 headers, IP addresses, user agents, and timestamps is recorded and stored centrally 
 for later analysis~\cite{aws-cloudwatch}. This ensures consistent data collection 
-across all test phases. The CDN remains the primary security control under evaluation, 
-while the honeypot acts as a passive observation point.
+across all test phases.
 
 \section{Software Tools}
 
@@ -577,6 +648,7 @@ while the honeypot acts as a passive observation point.
   \item Visual Studio Code
   \item BurpSuite~\cite{burpsuite}
   \item Postman
+  \item GCP Console Terminal
 \end{itemize}
 
 \subsection{Amazon Web Services (AWS)}
@@ -598,12 +670,8 @@ while the honeypot acts as a passive observation point.
     patterns and other honeypot interactions~\cite{aws-cloudwatch}.
 
   \item[EC2]
-    Hosts the honeypot web application. Also served as the initial deployment target
+    Served as the initial deployment target
     before migration to GCP~\cite{aws-ec2}.
-
-  \item[CloudFront / WAF]
-    AWS's CDN and Web Application Firewall. Used as a third CDN for comparison
-    against Cloudflare and Google Cloud CDN~\cite{aws-cloudfront,azure-waf-rules}.
 
 \end{description}
 
@@ -631,6 +699,15 @@ empirically test the effectiveness of bot detection, CAPTCHA challenges, DDoS
 protection, and other marketed security features against real-world 
 attacks~\cite{cf-how-works,cf-ddos,cf-bot-fight}.
 
+\subsection{BunnyCDN}
+Secondary CDN under evaluation, used to provide a direct comparison against
+Cloudflare under identical attack conditions. BunnyCDN's Advanced Shield tier
+was tested, providing access to 255 base WAF rules, AI-powered WAF learning
+mode, bot mitigation, and rate limiting~\cite{bunny-shield}. Unlike
+Cloudflare, BunnyCDN is a European-headquartered provider, giving it
+different jurisdictional and architectural characteristics relevant to the
+comparison~\cite{bunny-cdn-eu}.
+
 \subsection{Attack \& Penetration Testing Tools}
 
 All offensive tests were run from a Kali Linux virtual machine:
@@ -647,41 +724,6 @@ All offensive tests were run from a Kali Linux virtual machine:
   \item \textbf{Locust} --- open-source Python load testing framework~\cite{locust}
 \end{itemize}
 
-\section{Preliminary Research Findings}
-
-\subsection{Traffic Observations}
-
-\begin{itemize}
-  \item The hidden API endpoint was mostly hit by automated scrapers and LLM bots ---
-        surprisingly non-malicious in nature~\cite{cf-verified-bots}.
-  \item Real attacks targeted backend endpoints directly, skipping the frontend
-        entirely~\cite{mitre-recon}.
-  \item Mass exploit scans probing for exposed Laravel/PHPUnit endpoints were
-        detected early~\cite{exploit-db}.
-  \item IP reputation checks worked well to flag suspicious sources~\cite{aws-lambda}.
-\end{itemize}
-
-\subsection{Cloudflare Free Tier --- Baseline}
-
-\begin{itemize}
-  \item Gathered baseline data on what actually gets blocked versus what passes
-        through~\cite{cf-how-works}.
-  \item Tracked CAPTCHA frequency and whether bots could bypass 
-        challenges~\cite{cf-captcha-end}.
-  \item Recorded when rate limits triggered~\cite{cf-rate-limiting}.
-  \item Tested whether different security settings produced measurably different
-        results~\cite{cf-bot-fight}.
-\end{itemize}
-
-\subsection{Attack Patterns Identified Early}
-
-\begin{itemize}
-  \item Automated scanners probing for vulnerable frameworks~\cite{exploit-db}.
-  \item Login brute-force attempts~\cite{fortinet-brute-force}.
-  \item Random bot crawling with varied user agents~\cite{cf-verified-bots}.
-  \item Direct API attacks that completely ignored the 
-        frontend~\cite{owasp-api8}.
-\end{itemize}
 
 % ============================================================
 %  CHAPTER 4 — RESEARCH & EXPERIMENTATION
@@ -693,9 +735,7 @@ All offensive tests were run from a Kali Linux virtual machine:
 \label{sec:methodology}
 
 This project follows an experimental, empirical research approach by observing how
-real-world attacks interact with CDN security controls. Rather than relying solely on
-documentation or synthetic attack tools, the method focuses on measuring how CDN
-features behave when exposed to genuine malicious traffic from the public internet.
+real-world attacks interact with CDN security controls.
 
 \begin{figure}[H]
   \centering
@@ -793,13 +833,23 @@ persistent blocking~\cite{cf-community-blocking}.
 \subsubsection{Potential Solutions}
 
 \begin{enumerate}
-  \item Increase the maximum block duration (up to 1 hour via WAF rules interface) to
-        reduce daily attempts from hundreds of thousands to at most 2,400.
-  \item Implement progressive penalties: trigger a 1-hour block after five consecutive
-        violations of the 10-second window rule.
-  \item Build a custom solution using Cloudflare's API~\cite{cf-api-lockdown} in 
-        conjunction with a Lambda function~\cite{aws-lambda} to permanently block IPs 
-        that repeatedly exceed the threshold.
+    \item Manually create a custom WAF rule to identify and block repeat offenders, reducing daily attempts from hundreds of thousands to at most 2,400 by 
+    extending the block duration up to 1 hour via the WAF rules interface. However, 
+    this requires continuous manual monitoring to identify offending IPs and update 
+    rules accordingly, making it impractical at scale.
+    
+    \item Implement tiered penalties for repeat offenders: for example, trigger a 
+    progressively longer block after each consecutive violation of the 10-second 
+    window rule, eventually escalating to a permanent block. While more sophisticated 
+    than a flat block, this still demands ongoing manual oversight to track violation 
+    counts and adjust thresholds, which is equally tedious to maintain.
+    
+    \item Build a custom automated solution using Cloudflare's 
+    API~\cite{cf-api-lockdown} ~\cite{cf-api-lockdown-create} in conjunction with a Lambda 
+    function~\cite{aws-lambda} to permanently block IPs that repeatedly exceed the 
+    threshold, removing the need for manual intervention entirely. This is the most 
+    robust approach but introduces additional infrastructure complexity outside the 
+    scope of Cloudflare's free-tier offerings.
 \end{enumerate}
 
 \subsection{DDoS Protection}
@@ -1079,10 +1129,29 @@ Cloudflare's mitigation response~\cite{http2-ddos}.
 
 \paragraph{Analysis}
 
-Unlike previous attacks, H2Load generated visible security events in Cloudflare's
-dashboard and triggered an automated notification email. However, the 31--60\% bypass rate across runs 
-demonstrates that legitimate-protocol Layer 7 traffic poses a greater challenge to 
-CDN-based DDoS protection than volumetric network-layer attacks~\cite{http2-ddos}.
+Analysis Unlike previous attacks, H2Load generated visible security events in 
+Cloudflare's dashboard and triggered an automated notification email. This is 
+because H2Load operates at Layer 7 using valid TLS fingerprints and legitimate 
+SNI extensions~\cite{h2load}, meaning Cloudflare's edge must fully process each 
+request rather than dropping it at the network layer as it would with a SYN or 
+UDP flood. The traffic is indistinguishable from a real browser initiating an 
+HTTP/2 session, which forces the WAF to evaluate it against application-layer 
+rules rather than rejecting it outright based on protocol anomalies.
+
+However, the 31--60\% bypass rate across runs demonstrates that legitimate-protocol 
+Layer 7 traffic poses a significantly greater challenge to CDN-based DDoS protection 
+than volumetric network-layer attacks. Cloudflare's rate limiting on the free tier 
+activates reactively, it must observe a threshold of requests before triggering 
+a block, meaning a proportion of requests always reach the origin before the 
+mitigation kicks in~\cite{cf-rate-limiting}. This reactive window is what accounts 
+for the bypass rate: by the time Cloudflare's detection threshold is crossed, tens 
+of thousands of requests have already been forwarded. The inconsistency between 
+runs (31\% in one run, 60\% in another) further suggests the detection threshold 
+is non-deterministic, likely influenced by Cloudflare's internal load and edge 
+node state at the time of the test~\cite{cf-ddos}. This is a structural limitation 
+of free-tier rate limiting rather than a misconfiguration. The paid tiers expose 
+more granular controls and lower reactive latency that would reduce this window 
+considerably.
 
 \subsubsection{DDoS Attack Pattern Summary --- Cloudflare}
 \label{sec:cf-ddos-summary}
@@ -1195,7 +1264,7 @@ The Cloudflare traffic dashboard recorded \textbf{59,950 requests originating fr
 single Irish IP address} (ASN~1213 --- HEAnet, \texttt{140.203.12.65}) with
 \textbf{zero mitigation actions applied}. Every request detail entry showed
 ``Suspicious activity: None'' and ``Mitigation: Not mitigated''
-(Figures~\ref{fig:cf-sqli-dashboard} and~\ref{fig:cf-sqli-detail}).
+(Figure~\ref{fig:cf-sqli-dashboard}).
 
 \begin{figure}[H]
   \centering
@@ -1883,11 +1952,7 @@ clusters)~\cite{sklearn-kmeans}. The optimal value was identified as $k=5$.
     \centering
     \includegraphics[width=\textwidth]{image90.png}
   \end{minipage}\hfill
-  \begin{minipage}{0.50\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{image91.png}
-  \end{minipage}
-  \caption{Elbow Method and K-Means Training Result Summary}
+  \caption{Elbow Method}
   \label{fig:kmeans-elbow}
 \end{figure}
 
@@ -1934,7 +1999,7 @@ extracts stable clusters using the Excess of Mass method~\cite{sklearn-hdbscan}.
 \begin{itemize}
   \item Explicitly identifies noise (label $-1$), distinguishing genuine attack
         patterns from random benign traffic~\cite{hdbscan-params}.
-  \item Handles clusters of varying densities --- essential when different attack types
+  \item Handles clusters of varying densities, essential when different attack types
         exhibit vastly different activity levels~\cite{sklearn-hdbscan}.
   \item Multi-scale pattern detection via the cluster hierarchy captures reconnaissance
         followed by escalated exploitation as related 
@@ -1962,70 +2027,143 @@ clusters with clear behavioural patterns.
 \subsection{Cluster Labels and Analysis}
 \label{sec:cluster-analysis}
 
+\begin{itemize}
+  \item \href{https://github.com/G-cae78/ProtectTheHoney/blob/main/Machine\%20Learning/HDBSCAN\_train-2.ipynb}{\texttt{Model Training \& Labelling Functions}}
+\end{itemize}
+
+Rather than manually inspecting each cluster and assigning labels by hand, a 
+rule-based automated labelling system was developed to interpret the HDBSCAN 
+output in a consistent and reproducible way. Each cluster is represented by its 
+top 50 most frequently requested paths, extracted via \texttt{cluster\_top\_paths\_from\_list}. 
+These path frequency distributions are then scored against a predefined set of 
+\texttt{LABEL\_RULES}, a catalogue of known attack patterns, each consisting of 
+a list of regular expressions targeting characteristic URL signatures, and a 
+\texttt{min\_hits} threshold that must be satisfied before a label can be applied.
+
+For each cluster-rule pair, the scoring function \texttt{score\_cluster} counts 
+how many requests match any of the rule's compiled patterns, tracking both the 
+number of hits and the number of distinct patterns matched. A composite score is 
+then computed combining three signals: whether the \texttt{min\_hits} threshold 
+was met (a hard prerequisite weighted heavily), the proportional coverage of 
+matching traffic within the cluster, and the breadth of distinct pattern matches. 
+This ensures that a label is only applied when the cluster's traffic meaningfully 
+reflects the attack category not merely because a single path happened to 
+contain a matching substring.
+
+The \textbf{confidence score} is derived from the best-scoring rule's traffic 
+coverage within the cluster, optionally boosted when the hit count exceeds ten, 
+and capped at 1.0. Crucially, it reflects how well the cluster's observed traffic 
+aligns with the matched label's pattern set: a high confidence score such as 
+cluster 21 (WordPress exploitation, 1.000) or cluster 12 (PHP webshell, 0.955) 
+indicates that the overwhelming majority of traffic in that cluster matched the 
+label's characteristic patterns, making the assignment highly reliable. 
+Conversely, low-confidence assignments such as cluster 8 (PHP webshell, 0.029) 
+or cluster 17 (IoT exploit scan, 0.023) indicate that while the primary label 
+was the best available match, the cluster's traffic only partially resembled 
+the expected pattern signalling either a mixed cluster, an early-stage 
+behaviour not yet consolidated, or an emerging attack variant not fully 
+represented in the rule catalogue. This distinction is operationally valuable: 
+high-confidence clusters warrant immediate automated response, while 
+low-confidence ones benefit from secondary review via the agentic LLM layer 
+before action is taken.
+
+\textbf{Secondary labels} are assigned to clusters whose traffic scored 
+meaningfully against additional rules beyond the primary label specifically, 
+any rule whose score reaches at least 35\% of the best-scoring rule's score. 
+This captures the mixed-behaviour reality of live attack traffic: cluster 2, 
+for example, is primarily classified as generic login discovery but also exhibits 
+Cisco/VPN probe and IoT exploit scan patterns, reflecting automated tooling that 
+sweeps across multiple vulnerability categories in a single session. Secondary 
+labels are not assigned a severity action of their own but are surfaced in Jira 
+tickets and the LLM context window to give analysts a fuller picture of what a 
+given cluster is doing beyond its dominant behaviour.
+
+Severity levels are mapped directly from the \texttt{LABEL\_RULES} catalogue, 
+where each rule carries a pre-assigned severity tier: \texttt{CRITICAL} for 
+PHP webshell probing and path traversal (direct exploitation attempts), 
+\texttt{HIGH} for secrets harvesting, Exchange probing, IoT exploitation, and 
+Git exposure (significant initial-access vectors), \texttt{MEDIUM} for generic 
+login scanning, Swagger enumeration, and VPN probing (reconnaissance with 
+limited immediate impact), \texttt{LOW} for passive fingerprinting activity, 
+and \texttt{INFO} for confirmed legitimate traffic. These tiers determine the 
+action taken by the agentic pipeline: \texttt{CRITICAL} clusters map to a 
+block action in the Cloudflare WAF, \texttt{HIGH} to a managed challenge, 
+and \texttt{MEDIUM} to a standard challenge, with \texttt{INFO} clusters 
+suppressed from alerting entirely.
+
+This labelling architecture improves interpretability at two levels. For 
+the clustering model itself, it replaces opaque numeric cluster IDs with 
+human-readable threat categories grounded in real attack patterns observed 
+in the wild, making the model's output directly actionable by a security 
+analyst without requiring deep ML expertise. For the agentic LLM layer, 
+the confidence score, primary label, secondary labels, and severity tier 
+together form a structured context that allows the model to reason about 
+each cluster's threat posture, prioritise its responses, and communicate 
+its reasoning clearly in generated Jira tickets and WAF rule descriptions.
+
 \begin{table}[H]
-  \centering
-  \caption{HDBSCAN Cluster Labels with Confidence Scores (Retrained Model)}
-  \label{tab:clusters}
-  \small
-  \begin{tabularx}{\textwidth}{cXcX}
-    \toprule
-    \textbf{Cluster} & \textbf{Label} & \textbf{Conf.} 
-      & \textbf{Secondary Labels} \\
-    \midrule
-    $-1$ & PHP webshell deployment / backdoor probe      
-      & 0.342 & PHPUnit RCE probing; Generic login discovery \\
-      0  & Path traversal / directory escape probe       
-      & 0.723 & --- \\
-      1  & Git / source code exposure scan               
-      & 0.774 & GeoServer / infrastructure admin probe; Secrets discovery \\
-      2  & Generic login discovery / credential targeting 
-      & 0.929 & Cisco / VPN / firewall probe; IoT exploit scan \\
-      3  & Favicon / robots.txt fingerprinting           
-      & 0.784 & PHP webshell deployment / backdoor probe \\
-      4  & Favicon / robots.txt fingerprinting           
-      & 0.820 & --- \\
-      5  & Favicon / robots.txt fingerprinting           
-      & 0.873 & --- \\
-      6  & Uncategorized / miscellaneous scanning        
-      & 0.000 & --- \\
-      7  & PHP webshell deployment / backdoor probe      
-      & 0.377 & Cloud metadata / config exposure; WordPress exploitation \\
-      8  & PHP webshell deployment / backdoor probe      
-      & 0.029 & Cloud metadata / config exposure \\
-      9  & Exchange / Autodiscover / RDP probe           
-      & 0.229 & Secrets discovery; Generic login discovery \\
-     10  & PHP webshell deployment / backdoor probe      
-      & 0.036 & --- \\
-     11  & Exchange / Autodiscover / RDP probe           
-      & 0.254 & Generic login discovery \\
-     12  & PHP webshell deployment / backdoor probe      
-      & 0.955 & WordPress exploitation / admin enumeration \\
-     13  & Legitimate application traffic                
-      & 0.598 & Secrets discovery; Cloud metadata / config exposure \\
-     14  & IoT / embedded device exploit scan            
-      & 0.220 & Exchange / Autodiscover probe; GeoServer probe \\
-     15  & Uncategorized / miscellaneous scanning        
-      & 0.000 & --- \\
-     16  & IoT / embedded device exploit scan            
-      & 0.202 & Cloud metadata / config exposure; Exchange probe \\
-     17  & IoT / embedded device exploit scan            
-      & 0.023 & Cisco / VPN / firewall probe \\
-     18  & Secrets discovery (.env harvesting)           
-      & 0.851 & PHP webshell probe; PHP info/config discovery \\
-     19  & Secrets discovery (.env harvesting)           
-      & 0.190 & Cisco / VPN probe; SonicWall SSLVPN probe \\
-     20  & Secrets discovery (.env harvesting)           
-      & 0.496 & PHP webshell probe; Cloud metadata / config exposure \\
-     21  & WordPress exploitation / admin enumeration    
-      & 1.000 & PHP webshell probe; ACME challenge path abuse \\
-    \bottomrule
-  \end{tabularx}
+\centering
+\caption{HDBSCAN Cluster Labels with Confidence Scores (Retrained Model)}
+\label{tab:clusters}
+\small
+\begin{tabularx}{\textwidth}{cXcX}
+\toprule
+\textbf{Cluster} & \textbf{Label} & \textbf{Conf.} 
+& \textbf{Secondary Labels} \\
+\midrule
+$-1$ & PHP webshell deployment / backdoor probe      
+& 0.342 & PHPUnit RCE probing; Generic login discovery \\
+0  & Path traversal / directory escape probe       
+& 0.723 & --- \\
+1  & Git / source code exposure scan               
+& 0.774 & GeoServer / infrastructure admin probe; Secrets discovery \\
+2  & Generic login discovery / credential targeting 
+& 0.929 & Cisco / VPN / firewall probe; IoT exploit scan \\
+3  & Favicon / robots.txt fingerprinting           
+& 0.784 & PHP webshell deployment / backdoor probe \\
+4  & Favicon / robots.txt fingerprinting           
+& 0.820 & --- \\
+5  & Favicon / robots.txt fingerprinting           
+& 0.873 & --- \\
+6  & Uncategorized / miscellaneous scanning        
+& 0.000 & --- \\
+7  & PHP webshell deployment / backdoor probe      
+& 0.377 & Cloud metadata / config exposure; WordPress exploitation \\
+8  & PHP webshell deployment / backdoor probe      
+& 0.029 & Cloud metadata / config exposure \\
+9  & Exchange / Autodiscover / RDP probe           
+& 0.229 & Secrets discovery; Generic login discovery \\
+10  & PHP webshell deployment / backdoor probe      
+& 0.036 & --- \\
+11  & Exchange / Autodiscover / RDP probe           
+& 0.254 & Generic login discovery \\
+12  & PHP webshell deployment / backdoor probe      
+& 0.955 & WordPress exploitation / admin enumeration \\
+13  & Legitimate application traffic                
+& 0.598 & Secrets discovery; Cloud metadata / config exposure \\
+14  & IoT / embedded device exploit scan            
+& 0.220 & Exchange / Autodiscover probe; GeoServer probe \\
+15  & Uncategorized / miscellaneous scanning        
+& 0.000 & --- \\
+16  & IoT / embedded device exploit scan            
+& 0.202 & Cloud metadata / config exposure; Exchange probe \\
+17  & IoT / embedded device exploit scan            
+& 0.023 & Cisco / VPN / firewall probe \\
+18  & Secrets discovery (.env harvesting)           
+& 0.851 & PHP webshell probe; PHP info/config discovery \\
+19  & Secrets discovery (.env harvesting)           
+& 0.190 & Cisco / VPN probe; SonicWall SSLVPN probe \\
+20  & Secrets discovery (.env harvesting)           
+& 0.496 & PHP webshell probe; Cloud metadata / config exposure \\
+21  & WordPress exploitation / admin enumeration    
+& 1.000 & PHP webshell probe; ACME challenge path abuse \\
+\bottomrule
+\end{tabularx}
 \end{table}
 
 \subsubsection{Attack Distribution Summary}
-
-Retraining on the expanded dataset produced 22 clusters (plus a noise group),
-reflecting a richer and more granular threat landscape than the initial model:
+The trained model produced 22 clusters (plus a noise group), reflecting a 
+rich and granular threat landscape across the collected honeypot traffic:
 
 \begin{enumerate}[label=\alph*.]
   \item \textbf{PHP Webshell / Backdoor Probing} (clusters $-1$, 7, 8, 10, 12):
@@ -2180,7 +2318,7 @@ The Jupyter Notebook pipeline was converted into two production Python scripts:
   \item \href{https://github.com/G-cae78/ProtectTheHoney/blob/main/Machine\%20Learning/GCP-VM-Pipeline\%20/pipeline.py}{\texttt{pipeline.py}}
 \end{itemize}
 
-Dependencies were packaged and deployed to the GCP virtual machine. A cron job
+Dependencies were packaged as Joblib Artifacts and deployed to the GCP virtual machine. A cron job
 triggers the clustering pipeline~\cite{sklearn-hdbscan} every 5 minutes on the most 
 recent web traffic logs.
 
@@ -2200,14 +2338,65 @@ Each pipeline execution produces two outputs:
 \paragraph{rollup.json}
 Contains cluster assignments for all traffic observed in the previous 5-minute
 period, including top targeted paths, cluster strength, and noise 
-rate~\cite{sklearn-hdbscan}.
+rate~\cite{sklearn-hdbscan}. Each rollup file contains the following fields:
 
 \begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{image98.png}
-  \caption{rollup.json File Structure}
-  \label{fig:rollup-json}
+\centering
+\includegraphics[width=\textwidth]{image98.png}
+\caption{rollup.json File Structure}
+\label{fig:rollup-json}
 \end{figure}
+
+\begin{itemize}
+    \item \texttt{generated\_at} - ISO 8601 timestamp indicating when the 
+    pipeline run completed and the rollup was written to disk.
+    
+    \item \texttt{source} - the Nginx access log file that was parsed during 
+    this pipeline execution, confirming which log window the data originates from.
+    
+    \item \texttt{summary} -aggregate statistics for the current window:
+    \begin{itemize}
+        \item \texttt{total\_windows} - the number of 5-minute traffic windows 
+        processed in this run.
+        \item \texttt{noise\_windows} - the number of windows assigned to the 
+        HDBSCAN noise label ($-1$), representing traffic that did not fit any 
+        discovered cluster.
+        \item \texttt{noise\_rate} - the proportion of windows classified as 
+        noise, useful as a signal for model drift or unusually sparse traffic 
+        periods.
+        \item \texttt{avg\_strength} - the mean cluster membership strength 
+        across all non-noise windows, indicating how confidently HDBSCAN assigned 
+        traffic to its cluster.
+    \end{itemize}
+    
+    \item \texttt{clusters} - a list of cluster objects, one per detected 
+    behavioural group, each containing:
+    \begin{itemize}
+        \item \texttt{cluster} - the integer cluster ID assigned by HDBSCAN.
+        \item \texttt{cluster\_label} - the human-readable attack category 
+        assigned by the rule-based labelling system (e.g.\ ``PHPUnit RCE probing'').
+        \item \texttt{severity} - the severity tier inherited from 
+        \texttt{LABEL\_RULES} (\texttt{CRITICAL}, \texttt{HIGH}, \texttt{MEDIUM}, 
+        \texttt{LOW}, or \texttt{INFO}), which determines the WAF action the 
+        agentic pipeline will apply.
+        \item \texttt{patterns} - the specific regex patterns from the rule 
+        catalogue that matched traffic in this cluster, providing transparency 
+        into why the label was assigned.
+        \item \texttt{windows} - the number of 5-minute windows in this run 
+        that were assigned to this cluster.
+        \item \texttt{avg\_strength} - the mean HDBSCAN membership strength 
+        for this cluster specifically, reflecting how tightly grouped the traffic 
+        was around the cluster centroid.
+        \item \texttt{top\_paths} - a dictionary of the most frequently 
+        requested URL paths within this cluster and their request counts, 
+        providing the raw evidence behind the label assignment.
+        \item \texttt{status\_totals} - a breakdown of HTTP response codes 
+        returned to traffic in this cluster (200, 401, 403, 404, 429, 500), 
+        useful for understanding whether the attacker received any successful 
+        responses or was already being blocked at the application layer.
+    \end{itemize}
+\end{itemize}
+
 
 \paragraph{pred.csv}
 Summarises the IP addresses active during that period, their recommended security
@@ -2241,7 +2430,13 @@ and cluster~\cite{nist-800-53}. Table~\ref{tab:pred-csv} shows an example record
   \end{tabular}
 \end{table}
 
-\section{Job Scheduling and Monitoring}
+\section{Job Scheduling and Monitoring} 
+
+\noindent\textit{\small Cronicle Dashboard: 
+\href{http://34.51.232.105:3012}{http://34.51.232.105:3012} 
+(Note: may not be publicly accessible.)}
+
+\vspace{0.5em}
 
 Initially, pipeline jobs were triggered using standard cron jobs executed directly
 from the instance terminal. While functional, this approach offered no visibility
@@ -2353,7 +2548,7 @@ hallucinations.
 
 The MITRE D3FEND~\cite{d3fend} knowledgebase (thousands of entries) cannot be
 pasted wholesale into the prompt. Instead, each entry is pre-embedded offline using
-\texttt{voyageai/voyage-3-lite} and stored as normalised vectors. At query time, the 
+\texttt{voyageai/voyage-3-lite} and stored as normalised vectors using the Pickle library. At query time, the 
 model calls a \texttt{query\_knowledgebase} tool, and cosine-similarity retrieval 
 injects the three most relevant entries into the prompt, keeping the context window 
 lean while grounding recommendations in established 
@@ -2467,355 +2662,569 @@ the three pipeline tools~\cite{hf-inference}.
 ```
 
 % ============================================================
-%  CHAPTER 7 — RESULTS  (placeholder)
+%  CHAPTER 7 — RESULTS AND DISCUSSION
 % ============================================================
 \chapter{Results and Discussion}
 \label{chap:results}
 
-This chapter synthesises findings across the CDN comparative 
-evaluation (Chapter~\ref{chap:experimentation}), the HDBSCAN 
-traffic clustering model (Section~\ref{sec:hdbscan}), and 
-the agentic LLM interpretability pipeline 
-(Section~\ref{sec:agentic-llm}), drawing conclusions against 
-each research question stated in 
-Section~\ref{sec:research-questions}.
+This chapter synthesises findings across the CDN comparative
+evaluation (Chapter~\ref{chap:experimentation}) and the HDBSCAN
+traffic clustering model (Section~\ref{sec:hdbscan}), drawing
+conclusions against each research question stated in
+Section~\ref{sec:research-questions}. The agentic LLM pipeline
+evaluation is presented separately in
+Chapter~\ref{chap:pipeline-eval}.
 
 \section{CDN Comparative Findings}
 \label{sec:cdn-findings}
 
-The full comparative results are presented in 
-Table~\ref{tab:comparison} (Section~\ref{sec:comparison}). The 
-findings reveal a consistent pattern: both platforms handled 
-network-layer attacks reliably, but diverged significantly at 
+The full comparative results are presented in
+Table~\ref{tab:comparison} (Section~\ref{sec:comparison}). The
+findings reveal a consistent pattern: both platforms handled
+network-layer attacks reliably, but diverged significantly at
 the application layer where most real-world threats operate.
 
-At Layer 3 and 4, both CDNs absorbed SYN floods, UDP floods, 
-and ICMP floods entirely at the edge with zero measurable impact 
-on the origin server. Neither platform is meaningfully 
-differentiated at this layer, and for organisations primarily 
-concerned with volumetric attacks, the free tier of either 
+At Layer 3 and 4, both CDNs absorbed SYN floods, UDP floods,
+and ICMP floods entirely at the edge with zero measurable impact
+on the origin server. Neither platform is meaningfully
+differentiated at this layer, and for organisations primarily
+concerned with volumetric attacks, the free tier of either
 provider is sufficient.
 
-The gap opens at Layer 7. Cloudflare's free tier allowed 
-31--60\% of HTTP/2 flood traffic to reach the origin across 
-repeated test runs, with inconsistent mitigation between 
-identical runs suggesting the detection threshold is 
-non-deterministic~\cite{http2-ddos}. BunnyCDN escalated 
-progressively to a full IP-level ban by the fourth run, 
-reaching zero origin impact~\cite{bunny-shield-docs}. For slow 
-HTTP attacks, Cloudflare mitigated silently with no dashboard 
-visibility, while BunnyCDN logged 293 bot-detection events, 
-giving an administrator at least the awareness that an attack 
+The gap opens at Layer 7. Cloudflare's free tier allowed
+31--60\% of HTTP/2 flood traffic to reach the origin across
+repeated test runs, with inconsistent mitigation between
+identical runs suggesting the detection threshold is
+non-deterministic~\cite{http2-ddos}. BunnyCDN escalated
+progressively to a full IP-level ban by the fourth run,
+reaching zero origin impact~\cite{bunny-shield-docs}. For slow
+HTTP attacks, Cloudflare mitigated silently with no dashboard
+visibility, while BunnyCDN logged 293 bot-detection events,
+giving an administrator at least the awareness that an attack
 had occurred.
 
-The most operationally significant finding is the SQL injection 
-disparity. Across four test runs using SQLMap at maximum 
-aggression, tamper scripts, and a dedicated WAF-bypass 
-framework, Cloudflare's free tier generated zero WAF events and 
-applied zero mitigations. A single \texttt{--random-agent} flag 
-was sufficient to make 59,950 requests appear entirely benign. 
-BunnyCDN detected and logged every run, with its libjection 
-module normalising obfuscated payloads before matching, meaning 
-tamper scripts provided no evasion benefit. SQL injection 
-remains consistently ranked among the most critical web 
-application vulnerabilities~\cite{owasp-waf}, and for any 
-application not using parameterised queries, Cloudflare's free 
+The most operationally significant finding is the SQL injection
+disparity. Across four test runs using SQLMap at maximum
+aggression, tamper scripts, and a dedicated WAF-bypass
+framework, Cloudflare's free tier generated zero WAF events and
+applied zero mitigations. A single \texttt{--random-agent} flag
+was sufficient to make 59,950 requests appear entirely benign.
+BunnyCDN detected and logged every run, with its libjection
+module normalising obfuscated payloads before matching, meaning
+tamper scripts provided no evasion benefit. SQL injection
+remains consistently ranked among the most critical web
+application vulnerabilities~\cite{owasp-waf}, and for any
+application not using parameterised queries, Cloudflare's free
 tier offers no meaningful protection out of the box.
 
-These findings suggest the security gap between the two 
-platforms is not primarily a function of price but of default 
-rule depth. BunnyCDN Advanced Shield ships with 255 base WAF 
-rules and a libjection normalisation layer active by 
-default~\cite{bunny-waf-docs}. Cloudflare's free tier relies 
-more heavily on heuristics and user-agent matching, which are 
-trivially bypassed~\cite{cf-how-works}. Organisations choosing 
-a CDN on security grounds should treat application-layer WAF 
+These findings suggest the security gap between the two
+platforms is not primarily a function of price but of default
+rule depth. BunnyCDN Advanced Shield ships with 255 base WAF
+rules and a libjection normalisation layer active by
+default~\cite{bunny-waf-docs}. Cloudflare's free tier relies
+more heavily on heuristics and user-agent matching, which are
+trivially bypassed~\cite{cf-how-works}. Organisations choosing
+a CDN on security grounds should treat application-layer WAF
 coverage as the critical differentiator.
 
 \section{Closing the Gap with Automated Rule Consolidation}
 \label{sec:rule-consolidation}
 
-The CDN comparison above raises an obvious question: if 
-Cloudflare's free tier ships with weak default WAF coverage, 
-can supplementary custom rules close that gap? The answer from 
-this project is yes, but only if those rules are generated 
+The CDN comparison above raises an obvious question: if
+Cloudflare's free tier ships with weak default WAF coverage,
+can supplementary custom rules close that gap? The answer from
+this project is yes, but only if those rules are generated
 intelligently and maintained automatically.
 
-Cloudflare's free tier permits five custom WAF rules per zone. 
-On the surface this appears severely limiting, but the 
-expression language imposes no limit on logical operators within 
-a single rule, only a 4,096-character ceiling on the total 
-expression string~\cite{cf-community-blocking}. This means a 
-single rule can encode twenty or more distinct threat signatures 
-using OR-chained path patterns, effectively functioning as a 
-sub-rule container. The agentic pipeline exploits this 
-directly: rather than consuming one budget slot per detected 
-cluster, it groups clusters of equivalent severity and action 
-tier into shared expressions, appending new patterns as they 
+Cloudflare's free tier permits five custom WAF rules per zone.
+On the surface this appears severely limiting, but the
+expression language imposes no limit on logical operators within
+a single rule, only a 4,096-character ceiling on the total
+expression string~\cite{cf-community-blocking}. This means a
+single rule can encode twenty or more distinct threat signatures
+using OR-chained path patterns, effectively functioning as a
+sub-rule container. The agentic pipeline exploits this
+directly: rather than consuming one budget slot per detected
+cluster, it groups clusters of equivalent severity and action
+tier into shared expressions, appending new patterns as they
 are detected without consuming additional slots.
 
-The critical distinction is that the pipeline does not generate 
-arbitrary rules. Each rule expression is derived from the 
-specific path patterns observed in a named HDBSCAN 
-cluster~\cite{sklearn-hdbscan}, grounded in MITRE D3FEND 
-knowledgebase entries retrieved at query time~\cite{d3fend}. 
-A rule blocking \texttt{/\%2eenv} variants is deployed because 
-the clustering model identified a statistically coherent 
-secrets-harvesting behaviour pattern, not because a generic 
-blocklist was applied. This means the five-rule budget is spent 
-on threats actually observed against this specific deployment, 
-rather than on broad signatures that may generate false 
+The critical distinction is that the pipeline does not generate
+arbitrary rules. Each rule expression is derived from the
+specific path patterns observed in a named HDBSCAN
+cluster~\cite{sklearn-hdbscan}, grounded in MITRE D3FEND
+knowledgebase entries retrieved at query time~\cite{d3fend}.
+A rule blocking \texttt{/\%2eenv} variants is deployed because
+the clustering model identified a statistically coherent
+secrets-harvesting behaviour pattern, not because a generic
+blocklist was applied. This means the five-rule budget is spent
+on threats actually observed against this specific deployment,
+rather than on broad signatures that may generate false
 positives against legitimate traffic.
 
-Over the three-day evaluation period, seven semantically 
-distinct threat categories were covered within the five-rule 
-budget, intercepting 999 events with only five confirmed false 
-positives, all corrected by a single prompt adjustment. This 
-demonstrates that the constraint of five rules is not a ceiling 
-on protection coverage but on the number of independently 
-manageable expressions, and that an LLM with access to cluster 
-context can saturate that budget with high-precision, 
-deployment-specific signatures that a human analyst would take 
+Over the deployment period, seven semantically distinct threat
+categories were covered within the five-rule budget,
+intercepting over 2,000 events with only five confirmed false
+positives, all corrected by a single prompt adjustment. This
+demonstrates that the constraint of five rules is not a ceiling
+on protection coverage but on the number of independently
+manageable expressions, and that an LLM with access to cluster
+context can saturate that budget with high-precision,
+deployment-specific signatures that a human analyst would take
 significantly longer to write and maintain manually.
 
-\section{Agentic Pipeline Evaluation}
-\label{sec:pipeline-results}
+\section{Research Question Responses}
 
-\subsection{WAF Rule Effectiveness}
-To evaluate the end-to-end pipeline, three days of Cloudflare 
-firewall event logs were exported covering the period 19--22 
-March 2026. The logs capture every request matched by a rule 
-created autonomously by the LLM pipeline, with no manual 
-intervention at any stage after deployment~\cite{cf-api-lockdown}.
+\textbf{RQ1: How effective are CDN-provided security mechanisms
+at detecting and mitigating real-world malicious traffic when
+deployed on non-enterprise tiers?}
 
-Across the three-day window the pipeline-created and adjusted 
-rules intercepted \textbf{999 unique events}, broken down as 
-follows:
+As detailed in Section~\ref{sec:cdn-findings}, both platforms
+handled network-layer volumetric attacks reliably at no
+measurable cost to the origin. Application-layer protection on
+Cloudflare's free tier was inconsistent: HTTP/2 floods achieved
+bypass rates of 31--60\%, and SQL injection payloads with
+browser-like user agents passed through entirely undetected.
+Rate limiting enforced thresholds but permitted indefinite
+cycling. Free-tier CDN protection is therefore sufficient for
+volumetric threats but insufficient for application-layer
+attacks without augmentation, which the agentic pipeline
+demonstrated is achievable within free-tier constraints.
+
+\textbf{RQ2: How does the effectiveness of security features
+differ between CDN offerings under identical attack scenarios?}
+
+The comparative results in Table~\ref{tab:comparison} show that
+BunnyCDN Advanced Shield outperformed Cloudflare's free tier on
+every application-layer metric: progressive escalation to a
+full IP ban against HTTP/2 floods, consistent bot
+classification of slow HTTP attacks, and detection of every SQL
+injection test run through its libjection normalisation layer.
+The gap is one of default rule depth rather than price, as
+discussed in Section~\ref{sec:cdn-findings}.
+
+\textbf{RQ3: To what extent do CAPTCHAs and JavaScript challenges reduce 
+automated bot traffic without degrading legitimate user access?}
+
+Prior to enabling challenges, the honeypot's hidden Lambda endpoint attracted 
+some automated scraper traffic, though it was triggered infrequently,  most 
+malicious actors targeted backend API endpoints directly, bypassing the frontend 
+entirely and never encountering a challenge page. This reflects a broader 
+observation: the majority of real-world attack traffic operates at the backend 
+layer, where CAPTCHA and JavaScript challenges are largely irrelevant since 
+automated scanners do not interact with the frontend at all. Furthermore, any 
+challenge issued to a raw HTTP request against a backend path cannot realistically 
+be solved, it requires a browser to render and execute JavaScript, which 
+command-line tools such as SQLMap or curl-based scanners are incapable of, 
+meaning a challenge response against backend traffic functions as a de facto block. 
+Following the introduction of Cloudflare's challenge mechanisms, frontend scraper 
+interactions ceased entirely, confirming effectiveness against unsophisticated 
+automation. However, as the BUCKLOG campaign demonstrated in 
+Chapter~\ref{chap:pipeline-eval}, persistent scheduled tooling absorbs challenge 
+overhead at negligible cost. Challenges therefore function as a deterrent for 
+opportunistic, low-sophistication frontend crawlers but offer limited utility 
+against the backend-focused attack traffic that dominated this deployment. This 
+finding is consistent with Cloudflare's own deprecation of traditional CAPTCHAs in 
+favour of invisible, behaviour-based verification~\cite{cf-captcha-end}.
+
+\textbf{RQ4: Which categories of malicious traffic are most
+likely to bypass CDN security controls?}
+
+Three categories emerged as most likely to bypass free-tier
+controls. Protocol-compliant HTTP/2 floods bypassed Cloudflare's
+edge at rates of 31--60\% because valid TLS fingerprints forced
+request processing rather than dropping. SQL injection payloads
+with randomised user agents bypassed all free-tier WAF
+heuristics entirely, with 59,950 requests reaching the origin
+unmitigated. Secrets-harvesting traffic using URL-encoded and
+shell-metacharacter path variants bypassed both CDNs natively
+until the pipeline deployed targeted rules, as detailed in
+Chapter~\ref{chap:pipeline-eval}. The common factor across all
+three is the use of protocol-compliant or superficially
+legitimate request characteristics to evade signature-based
+detection.
+
+
+% ============================================================
+%  CHAPTER 8 — AGENTIC PIPELINE EVALUATION
+% ============================================================
+\chapter{Agentic Pipeline Evaluation}
+\label{chap:pipeline-eval}
+
+This chapter evaluates the end-to-end performance of the agentic LLM pipeline 
+described in Chapter~\ref{chap:implementation}, covering WAF rule effectiveness, 
+attack category distribution, the handling of novel and unclassified traffic, 
+persistent threat actor analysis, temporal patterns, geographic distribution, and 
+overall pipeline autonomy. All firewall event data was exported from Cloudflare 
+across multiple 24-hour windows sampled from a continuous two-week deployment 
+running from 19 March to 1 April 2026. The results presented here reflect the 
+combined improvement achieved by integrating the agentic pipeline with 
+Cloudflare's existing free-tier protections which includes always-on DDoS mitigation 
+and Bot Fight Mode.~\cite{cf-api-lockdown}.
+
+\section{WAF Rule Effectiveness}
+\label{sec:waf-effectiveness}
+
+Across the sampled deployment windows the pipeline-created
+rules intercepted a combined \textbf{2,022 events} from
+\textbf{172 unique IP addresses}. Table~\ref{tab:waf-actions}
+summarises the overall action distribution.
 
 \begin{table}[H]
 \centering
-\caption{WAF rule actions over the evaluation period 
-(19--22 March 2026)}
+\caption{WAF rule actions across sampled deployment windows
+(19 March -- 1 April 2026)}
+\label{tab:waf-actions}
 \begin{tabular}{lrr}
 \hline
 \textbf{Action} & \textbf{Events} & \textbf{Proportion} \\
 \hline
-Interactive challenge  & 913 & 91.4\% \\
-Hard block             &  67 &  6.7\% \\
-Managed challenge      &  19 &  1.9\% \\
+Managed challenge  & 1,408 & 69.6\% \\
+Block              &   538 & 26.6\% \\
+Challenge          &    76 &  3.8\% \\
 \hline
-\textbf{Total}         & \textbf{999} & \textbf{100\%} \\
+\textbf{Total}     & \textbf{2,022} & \textbf{100\%} \\
 \hline
 \end{tabular}
-\label{tab:waf-actions}
 \end{table}
 
-The distribution reflects the pipeline's tiered severity 
-strategy: Critical-severity clusters map to \texttt{block}, 
-High-severity clusters to \texttt{managed\_challenge}, and 
-Medium-severity clusters to \texttt{challenge}. The dominance 
-of challenge events indicates the pipeline correctly identified 
-the majority of threats as automated scanning rather than 
-targeted exploitation, preserving the possibility of legitimate 
-access while impeding bot traffic~\cite{cf-bot-fight}.
+The distribution reflects the pipeline's tiered severity
+strategy: Critical-severity clusters map to \texttt{block},
+High-severity clusters to \texttt{managed\_challenge}, and
+Medium-severity clusters to \texttt{challenge}. The dominance
+of managed challenge events indicates the pipeline correctly
+identified the majority of intercepted traffic as automated
+scanning rather than targeted exploitation, preserving the
+possibility of legitimate access while impeding bot
+traffic~\cite{cf-bot-fight}.
 
-\subsection{Rule Coverage and Consolidation}
-As described in Section~\ref{sec:rule-consolidation}, 
-Cloudflare's five-rule limit is not a ceiling on protection 
-coverage when rules are OR-chained intelligently. Over the 
-evaluation period the pipeline deployed the following rules 
-autonomously:
+\section{Rule Coverage and Consolidation}
+\label{sec:rule-coverage}
+
+Three agentic model created rules were active across the deployment
+period. A key structural property of the pipeline's rule
+generation is visible in Table~\ref{tab:rule-perf}: each rule
+maps exclusively to a single action tier with no overlap,
+reflecting the OR-chaining strategy that groups threat patterns
+by severity tier into shared expressions. The action applied
+to any given request is therefore entirely determined by which
+rule matched, making pipeline behaviour predictable and
+auditable without requiring per-request logic.
 
 \begin{table}[H]
 \centering
-\caption{Pipeline-created WAF rules and event counts}
-\begin{tabular}{p{8.5cm}rr}
+\caption{Pipeline-created WAF rules, event counts, and actions}
+\label{tab:rule-perf}
+\begin{tabular}{p{6.5cm}lrr}
 \hline
-\textbf{Rule description} & \textbf{Events} & \textbf{Action}\\
+\textbf{Rule description} & \textbf{Action} & \textbf{Events}
+& \textbf{Proportion} \\
 \hline
-Medium severity cluster 2 --- IoT admin login scan        
-  & 482 & challenge \\
-Challenge zgrab user-agent OWA endpoint probing           
-  & 385 & challenge \\
-CRITICAL: PHP webshell / WordPress admin enumeration      
-  &  53 & block \\
-Block low severity cluster 1 scanning                     
-  &  40 & block \\
-HIGH: IoT/embedded device exploit scan (cluster 17)       
-  &  17 & managed\_challenge \\
-CRITICAL: Cluster 17 --- unknown/noise root path activity 
-  &  14 & block \\
-Low: Unclassified traffic pattern (cluster 10)            
-  &   5 & challenge \\
+Critical/high severity - PHPUnit RCE, \texttt{.env}
+harvesting, AWS credential paths, IoT exploit
+endpoints, secrets files
+  & Block             & 538 & 26.6\% \\
+Persistent actor patterns - BUCKLOG campaign,
+login paths, scanning user agents, API
+documentation endpoints
+  & Managed challenge & 969 & 47.9\% \\
+Medium severity - WordPress admin interfaces,
+zgrab user-agent, OWA endpoint probing,
+unclassified scanning
+  & Challenge         & 515 & 25.5\% \\
+\hline
+\textbf{Total} & & \textbf{2,022} & \textbf{100\%} \\
 \hline
 \end{tabular}
-\label{tab:rule-events}
 \end{table}
 
-Seven semantically distinct threat categories are handled 
-within the five-rule budget by grouping clusters of equivalent 
-severity and action tier into shared OR-chained expressions. 
-As new clusters appear in subsequent rollups the pipeline 
-appends their patterns to the appropriate existing rule rather 
-than consuming an additional budget slot, allowing protection 
-coverage to grow continuously without manual intervention.
+Two of the five available rule budget slots remained unused
+across the entire deployment period, leaving headroom for
+novel threat categories to be added automatically as the
+model encounters them in future rollup cycles.
 
-\subsection{Persistent Threat Actor: BUCKLOG}
-The most significant finding across the evaluation period was 
-a persistent automated scanning campaign originating from ASN 
-\texttt{BUCKLOG} (France), accounting for \textbf{874 of the 
-999 events (87.5\%)}. The actor operated from only three 
-distinct IP addresses and almost exclusively used 
-\texttt{curl/8.7.1} as its user agent, confirming fully 
-automated tooling. Two coordinated bursts were observed at 
-06:00 UTC on consecutive days (444 and 391 events 
-respectively), consistent with a scheduled cron-driven scan.
+\section{Attack Category Distribution}
+\label{sec:attack-cats}
 
-The targeted paths reveal a sophisticated evasion strategy, 
-consistent with documented secrets-harvesting and environment 
-file exposure techniques~\cite{owasp-api8,github-sensitive-data}:
+Table~\ref{tab:attack-cats} maps intercepted events to attack
+categories based on path signatures observed in the firewall
+logs.
+
+\begin{table}[H]
+\centering
+\caption{Attack category distribution across pipeline-intercepted
+events (19 March -- 1 April 2026)}
+\label{tab:attack-cats}
+\begin{tabular}{lrr}
+\hline
+\textbf{Attack Category} & \textbf{Events} & \textbf{Proportion} \\
+\hline
+BUCKLOG persistent campaign
+  & 874 & 43.2\% \\
+WordPress exploitation (\texttt{/xmlrpc.php},
+\texttt{/wp-login.php}, \texttt{/wp-admin})
+  & 290 & 14.3\% \\
+PHP webshell / RCE probing
+  & 277 & 13.7\% \\
+.env / secrets harvesting
+  & 126 &  6.2\% \\
+Novel / unclassified (noise)
+  & 450 & 22.3\% \\
+Git source exposure
+  &   5 &  0.2\% \\
+\hline
+\textbf{Total} & \textbf{2,022} & \textbf{100\%} \\
+\hline
+\end{tabular}
+\end{table}
+
+WordPress exploitation and PHP webshell probing together
+accounted for 28.0\% of all pipeline-intercepted events,
+appearing consistently across the majority of sampled windows.
+Webshell filenames rotated across runs ---
+\texttt{/txets.php}, \texttt{/fe5.php}, \texttt{/alam.php},
+\texttt{/wp-conflg.php} (an adversarial misspelling of a
+legitimate WordPress file) --- consistent with automated
+tooling cycling through payload lists rather than targeting a
+fixed path~\cite{exploit-db}. Environment file and secrets
+harvesting paths appeared across multiple windows, confirming
+the persistence of this category throughout the deployment
+period.
+
+\subsection{Novel and Unclassified Traffic}
+\label{sec:novel-traffic}
+
+The 22.3\% of events marked as novel or unclassified were
+assigned by the HDBSCAN model to the noise label (cluster
+$-1$) or to low-confidence uncategorised clusters, reflecting
+attack patterns absent from the training data at the time of
+evaluation. This is an expected and intentional property of
+the pipeline rather than a failure mode: internet-facing
+attack traffic changes daily as adversaries rotate tooling,
+payloads, and targets~\cite{mitre-recon}, and a model trained
+on a fixed historical window will inevitably encounter patterns
+it cannot confidently label.
+
+This is precisely the scenario the agentic layer is designed
+to handle. Rather than discarding noise-labelled traffic, the
+pipeline passes these unrecognised patterns to the LLM for a
+second-pass analysis. Grounded in the MITRE D3FEND
+knowledgebase retrieved via RAG~\cite{d3fend}, the LLM
+examines the raw request paths, user agents, and behavioural
+signals of the unclassified cluster and makes one of two
+determinations: either the pattern represents a recognisable
+threat category the clustering model has not yet accumulated
+enough examples of to form a stable cluster, in which case a
+WAF rule is deployed preemptively; or the pattern is genuine
+noise, benign or low-signal traffic with no discernible
+attack intent, in which case no action is taken and the
+event is suppressed from ticketing. This two-stage design
+means protection coverage is not bounded by what the
+clustering model was trained on. Novel attacks surface as
+noise, the LLM interprets them with reference to established
+threat frameworks, and the firewall adapts without requiring
+model retraining or manual analyst review.
+
+\section{Persistent Threat Actor: BUCKLOG}
+\label{sec:bucklog}
+
+The most significant finding across the deployment period was
+a persistent automated scanning campaign originating from ASN
+\texttt{BUCKLOG} (France), accounting for \textbf{874 events
+(43.2\% of all pipeline interceptions)}. Two distinct BUCKLOG
+campaigns were observed with different targeting profiles,
+reflecting the actor's use of multiple automated scanning jobs
+against the same infrastructure.
+
+The first campaign operated from three distinct IP addresses
+using \texttt{curl/8.7.1} as its user agent. Two coordinated
+bursts were observed at 06:00 UTC on consecutive days (444 and
+391 events respectively), consistent with a scheduled
+cron-driven scan. The targeted paths reveal a sophisticated
+evasion strategy focused on secrets harvesting and environment
+file exposure~\cite{owasp-api8,github-sensitive-data}:
 
 \begin{itemize}
-  \item \texttt{/\%2eenv} --- URL-encoded \texttt{.env} to 
-        bypass naive string matching on the literal dot 
+  \item \texttt{/\%2eenv} --- URL-encoded \texttt{.env} to
+        bypass naive string matching on the literal dot
         character.
-  \item \texttt{/\$(pwd)/.env.staging} --- shell metacharacter 
-        injection attempting to resolve environment files 
+  \item \texttt{/\$(pwd)/.env.staging} --- shell metacharacter
+        injection attempting to resolve environment files
         relative to the working directory.
-  \item \texttt{/etc/grafana/grafana.ini} --- targeting Grafana 
+  \item \texttt{/etc/grafana/grafana.ini} --- targeting Grafana
         credential storage.
-  \item \texttt{/api/v1/credentials}, \texttt{/api/credentials} 
+  \item \texttt{/api/v1/credentials}, \texttt{/api/credentials}
         --- systematic enumeration of credential API endpoints.
-  \item \texttt{/var/www/.env}, \texttt{/stripe/.env} --- 
+  \item \texttt{/var/www/.env}, \texttt{/stripe/.env} ---
         directory-prefix variants of secrets harvesting.
 \end{itemize}
 
-When the pipeline first detected the BUCKLOG cluster it 
-followed its tiered severity strategy and issued a challenge 
-response, the appropriate initial action for a pattern that 
-had not yet demonstrated persistence. Cloudflare's free tier, 
-left to its own default rules, had no equivalent response at 
-all: the same actor and the same paths generated zero WAF 
-events natively, as established in the SQL injection testing 
-in Section~\ref{sec:cf-sqli}. The pipeline at least 
-intercepted the traffic from the first detection cycle.
+The second campaign operated from a single IP (185.177.72.38)
+and targeted Next.js and React Server Component endpoints
+(\texttt{/\_rsc}, \texttt{/\_middleware},
+\texttt{/\_next/image}, \texttt{/api/auth/session}),
+suggesting automated framework fingerprinting prior to
+exploitation~\cite{mitre-recon}. Both campaigns were
+intercepted entirely by pipeline-created rules without any
+manual rule updates between them, demonstrating that rules
+deployed in response to the first campaign provided coverage
+against the second without requiring the pipeline to re-learn
+the actor.
 
-The challenge proved insufficient. A fully automated tool 
-with no human in the loop absorbs challenge overhead at 
-negligible cost~\cite{cf-captcha-end}, and BUCKLOG returned 
-the following day with an identical burst at the same time. 
-On detecting the recurrence across successive rollup cycles, 
-the pipeline escalated its response, promoting the action tier 
-from challenge to block for the BUCKLOG-associated patterns. 
-This escalation happened autonomously, without any manual 
-intervention, and is the key operational result of the 
-evaluation: not just that the pipeline detected the threat, 
-but that it recognised the challenge was not working and 
-changed its strategy accordingly.
+When the pipeline first detected the initial BUCKLOG cluster
+it issued a challenge response, the appropriate initial action
+for a pattern that had not yet demonstrated persistence.
+Cloudflare's free tier, left to its own default rules, had no
+equivalent response at all: the same actor and the same paths
+generated zero WAF events natively, as established in
+Section~\ref{sec:cf-sqli}. The challenge proved insufficient
+and a fully automated tool absorbs challenge overhead at
+negligible cost~\cite{cf-captcha-end} and BUCKLOG returned
+the following day with an identical burst. On detecting the
+recurrence across successive rollup cycles, the pipeline
+escalated its response autonomously, promoting the action tier
+from challenge to block. This is the key operational result of
+the evaluation: not just that the pipeline detected the threat,
+but that it recognised the challenge was not working and
+changed its strategy accordingly without human intervention.
 
-All 874 events were ultimately challenged or blocked despite 
-the URL-encoding and path-manipulation evasion techniques. 
-This is further notable because the HDBSCAN model was trained 
-on unencoded paths; the LLM's use of 
-\texttt{http.request.uri.path contains} expressions in 
-Cloudflare's normalised field, which decodes percent-encoding 
-before matching, provided implicit coverage of encoded 
-variants without any explicit training on them. Bare 
-Cloudflare, without the pipeline, would have allowed every 
-one of these requests through silently.
+All BUCKLOG events were ultimately challenged or blocked
+despite URL-encoding and path-manipulation evasion techniques.
+The HDBSCAN model was trained on unencoded paths; the LLM's
+use of \texttt{http.request.uri.path contains} expressions in
+Cloudflare's normalised field, which decodes percent-encoding
+before matching, provided implicit coverage of encoded variants
+without any explicit training on them. Bare Cloudflare, without
+the pipeline, would have allowed every one of these requests
+through silently.
 
-\subsection{Temporal Attack Pattern}
-Figure~\ref{fig:waf-timeline} shows the hourly event 
-distribution across the evaluation window. The two 06:00 UTC 
-spikes are separated by exactly 24 hours, strongly suggesting 
-a scheduled scanning job~\cite{mitre-recon}. The inter-burst 
-traffic represents background noise from opportunistic 
-scanners on other ASNs including Microsoft, Google Cloud, 
-and Tencent.
+\section{Temporal Attack Pattern}
+\label{sec:temporal}
+
+Figure~\ref{fig:waf-timeline} shows the hourly event
+distribution across the initial evaluation window. The two
+06:00 UTC spikes are separated by exactly 24 hours, strongly
+suggesting a scheduled scanning job~\cite{mitre-recon}. The
+inter-burst traffic represents background noise from
+opportunistic scanners on other ASNs including Microsoft,
+Google Cloud, and Tencent.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{waf_timeline.png}
-  \caption{Hourly WAF rule event distribution, 
+  \caption{Hourly WAF rule event distribution,
   19--22 March 2026}
   \label{fig:waf-timeline}
 \end{figure}
 
-\subsection{Geographic and Network Distribution}
+\section{Geographic and Network Distribution}
+\label{sec:geo}
 
 \begin{table}[H]
 \centering
-\caption{Top source countries by event count}
+\caption{Top source countries by pipeline rule event count
+across full deployment period}
+\label{tab:geo-distribution}
 \begin{tabular}{lrr}
 \hline
 \textbf{Country} & \textbf{Events} & \textbf{Proportion} \\
 \hline
-France (FR)        & 877 & 87.8\% \\
-United States (US) &  76 &  7.6\% \\
-Lithuania (LT)     &   9 &  0.9\% \\
-Germany (DE)       &   7 &  0.7\% \\
-China (CN)         &   5 &  0.5\% \\
-Ireland (IE)       &   5 &  0.5\% \\
-Other              &  20 &  2.0\% \\
+France (FR)         & 1,299 & 64.2\% \\
+United States (US)  &   208 & 10.3\% \\
+Canada (CA)         &   209 & 10.3\% \\
+United Kingdom (GB) &    75 &  3.7\% \\
+Netherlands (NL)    &    61 &  3.0\% \\
+China (CN)          &    38 &  1.9\% \\
+Other               &   132 &  6.5\% \\
 \hline
 \end{tabular}
-\label{tab:geo-distribution}
 \end{table}
 
-The concentration in France is attributable entirely to the 
-BUCKLOG campaign. United States traffic originates 
-predominantly from cloud infrastructure and represents a mix 
-of legitimate crawlers~\cite{cf-verified-bots} and 
-opportunistic scanners caught by broad challenge rules. The 
-Irish traffic is consistent with the honeypot's European 
-hosting location attracting regional scanners.
+France dominates due to the two BUCKLOG campaigns. Canada is
+elevated by a concentrated scanning campaign from ASN AS41564,
+where a single IP accounted for 205 events in one 24-hour
+window 43.8\% of that day's pipeline traffic 
+consistent with a dedicated scanning tool operating from a
+fixed address rather than a distributed botnet. United States
+traffic originates predominantly from Microsoft cloud
+infrastructure caught by broad challenge
+rules~\cite{cf-verified-bots}.
 
-\subsection{Pipeline Autonomy Assessment}
-Across the evaluation period the pipeline operated without any 
-manual intervention. Starting from raw HDBSCAN cluster 
-rollups, it autonomously:
+\section{Pipeline Autonomy Assessment}
+\label{sec:autonomy}
+
+Table~\ref{tab:autonomy} summarises the key operational
+metrics across the full deployment period.
+
+\begin{table}[H]
+\centering
+\caption{Pipeline operational metrics across full deployment
+period}
+\label{tab:autonomy}
+\begin{tabular}{lr}
+\hline
+\textbf{Metric} & \textbf{Value} \\
+\hline
+Total pipeline-intercepted events   & 2,022 \\
+Unique source IPs intercepted       &   172 \\
+Confirmed false positives           &     5 \\
+Manual interventions required       &     0 \\
+Rule budget slots consumed          & 3 of 5 \\
+Rollup cycles processed per day     &   288 \\
+\hline
+\end{tabular}
+\end{table}
+
+Across the full deployment the pipeline autonomously:
 
 \begin{enumerate}
-  \item Queried the MITRE D3FEND knowledgebase~\cite{d3fend} 
-        to ground recommendations in established threat 
+  \item Queried the MITRE D3FEND knowledgebase~\cite{d3fend}
+        to ground recommendations in established threat
         frameworks.
-  \item Deployed and iteratively updated Cloudflare WAF rules 
-        via the Rulesets API~\cite{cf-api-lockdown}, 
-        OR-chaining new cluster patterns into existing rules 
+  \item Deployed and iteratively updated Cloudflare WAF rules
+        via the Rulesets API~\cite{cf-api-lockdown},
+        OR-chaining new cluster patterns into existing rules
         as they were detected.
-  \item Raised structured Jira tickets~\cite{jira-api} for 
-        every Medium, High, and Critical cluster, each 
-        containing the rule ID, patterns deployed, and 
+  \item Raised structured Jira tickets~\cite{jira-api} for
+        every Medium, High, and Critical cluster, each
+        containing the rule ID, patterns deployed, and
         knowledgebase references.
-  \item Adapted rule expressions to cover URL-encoded and 
-        path-manipulated variants of known attack patterns 
+  \item Adapted rule expressions to cover URL-encoded and
+        path-manipulated variants of known attack patterns
         through Cloudflare's normalised field matching.
 \end{enumerate}
 
-The results demonstrate that an unsupervised clustering 
-model~\cite{sklearn-hdbscan} combined with an agentic LLM 
-layer can replace the manual analyst workflow of identifying 
-threats, writing WAF expressions, and filing incident tickets, 
-all within the constraints of a free-tier infrastructure. The 
-system processed 288 five-minute rollup cycles per day across 
-the evaluation period, with the model fallback chain ensuring 
-uninterrupted coverage despite individual model rate limits 
-on Groq's free tier.
+The results demonstrate that an unsupervised clustering
+model~\cite{sklearn-hdbscan} combined with an agentic LLM
+layer can replace the manual analyst workflow of identifying
+threats, writing WAF expressions, and filing incident tickets,
+all within the constraints of a free-tier infrastructure. The
+system processed 288 five-minute rollup cycles per day across
+the deployment period, with the model fallback chain ensuring
+uninterrupted coverage despite individual model rate limits on
+Groq's free tier.
+
+\section{Limitations}
+\label{sec:pipeline-limitations}
 
 \subsection{Limitations}
-Several limitations were observed during evaluation. The model 
-occasionally mapped Critical-severity clusters to 
-\texttt{managed\_challenge} rather than \texttt{block}, 
-reflecting imprecise severity-to-action mapping in the prompt 
-rather than a failure of cluster detection. The pipeline also 
-depends on Groq's free-tier availability; while the 
-seven-model fallback chain provides a 2.2$\times$ daily 
-capacity margin, a sustained outage across all models would 
-interrupt rule deployment until the next cycle. Finally, 
-Cloudflare's free tier does not expose Security Events beyond 
-a 24-hour window~\cite{cf-ddos}, requiring an export script 
-to run at least twice daily to maintain a complete historical 
-record.
+
+Several limitations were observed during evaluation. The model occasionally 
+mapped Critical-severity clusters to managed\_challenge rather than block, 
+reflecting imprecise severity-to-action mapping in the prompt rather than a 
+failure of cluster detection. Five false positives were recorded across the 
+deployment period, all caused by the pipeline deploying an overly broad 
+\texttt{/assets* & /*} wildcard path expression in a block rule, which inadvertently 
+intercepted legitimate user requests including real login attempts. This was 
+resolved by explicitly instructing the LLM in the system prompt to never use 
+wildcards and to be as specific as possible when constructing WAF rule 
+expressions after which no further false positives were observed. The 
+pipeline also depends on Groq's free-tier availability; while the seven-model 
+fallback chain provides a 2.2$\times$ daily capacity margin, a sustained outage 
+across all models would interrupt rule deployment until the next cycle. Finally, 
+Cloudflare's free tier does not expose Security Events beyond a 24-hour 
+window~\cite{cf-ddos}, requiring an export script to run at least twice daily 
+to maintain a complete historical record.
 
 % ============================================================
 %  CHAPTER 8 — FUTURE WORK
@@ -2954,6 +3363,20 @@ NGINX, ``Create Amazon EC2 Instances for NGINX,'' \textit{NGINX Deployment Guide
 [Online]. Available:
 \url{https://docs.nginx.com/nginx/deployment-guides/amazon-web-services/ec2-instances-for-nginx/}
 
+\bibitem{chin2025}
+D.~M.~Chin, S.~Y.~Enoch, and co-authors,
+``A Practical Honeypot-Based Threat Intelligence Framework for Cyber
+Defence in the Cloud,''
+\textit{arXiv preprint arXiv:2512.05321}, 2025.
+[Online]. Available: \url{https://arxiv.org/abs/2512.05321}
+
+\bibitem{hassanin2024}
+M.~Hassanin and N.~Moustafa,
+``Intelligent Threat Detection --- {AI}-Driven Analysis of Honeypot
+Data to Counter Cyber Threats,''
+\textit{Electronics}, vol.~13, no.~13, p.~2465, 2024.
+doi: \url{https://doi.org/10.3390/electronics13132465}
+
 \bibitem{whatismyip}
 WhatIsMyIPAddress, \textit{WhatIsMyIPAddress.com}. [Online]. Available:
 \url{https://whatismyipaddress.com}
@@ -3079,9 +3502,14 @@ Hugging Face, ``Inference Providers,'' \textit{Hugging Face Documentation}.
 [Online]. Available: \url{https://huggingface.co/docs/inference-providers/en/index}
 
 \bibitem{cf-api-lockdown}
-Cloudflare, ``Cloudflare API: Firewall Lockdowns,'' \textit{Cloudflare API
-Documentation}. [Online]. Available:
-\url{https://developers.cloudflare.com/api/resources/firewall/subresources/lockdowns/models/lockdown_url/}
+Cloudflare, ``WAF Custom Rules,'' \textit{Cloudflare WAF Documentation}. 
+[Online]. Available:
+\url{https://developers.cloudflare.com/waf/custom-rules/}
+
+\bibitem{cf-api-lockdown-create}
+Cloudflare, ``Create a Custom Rule via API for a Zone,'' \textit{Cloudflare 
+WAF Documentation}. [Online]. Available:
+\url{https://developers.cloudflare.com/waf/custom-rules/create-api/}
 
 \bibitem{jira-api}
 Atlassian, ``JIRA REST API Examples,'' \textit{Atlassian Developer Documentation}.
@@ -3315,6 +3743,8 @@ Amazon Web Services, ``Amazon CloudFront,'' \textit{AWS Documentation}.
   20 Mar 2026  & Deploy Agentic LLM. \\
   21 Mar 2026  & Read over project report \\
   25 Mar 2026  & Clean up references in project \\
+  4 Apr 2026  & Minor Tweaks and Final
+  read-through\\
   \bottomrule
 \end{longtable}
 
